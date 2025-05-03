@@ -1,93 +1,154 @@
-# M3200_KhudyakovAA
+# Stage 1. Preparations and design
+
+*Тема: practicum.yandex.ru*
+
+## Функциональные требования
+
+### I. Курсы
+
+**1.1. Информация о курсе**  
+Система должна хранить следующую информацию о курсах:
+- Название 
+- Описание
+- Специализация
+- Продолжительность
+- Цена курса
+- Список тем курса
+- Информация о преподавателях курса
+- Уровень сложности курса (с нуля, продвинутый и т.д.)
+
+**1.2. Информация о темах курса**  
+Для каждого курса должен храниться список тем курса. Система должна хранить следующую информацию для каждой темы:
+- Название темы
+- Описание
+- Навыки и технологии осваиваемые в рамках данной темы
+- Трудоёмкость темы в часах
+- Количетсво промежуточных проектов, входящих в тему
+
+**1.3. Статистика курса**  
+- Сколько человек приобрело курс
+- Сколько человек были успешно трудоустроены по итогам курса и карьерного трека
+- Средняя оценка курса выпускниками
+
+**1.4. Связь с другими объектами**  
+- У курса есть состав преподавателей, менторов и ревьюеров
 
 
+### II. Сотрудники
 
-## Getting started
+**2.1. Информация о сотрудниках**  
+Система должна иметь возможность регистрировать сотрудников платформы:
+- Преподаватель
+- Ментор
+- Ревьюер
+- Поддержка
+- SMM-менеджер
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Для каждого необходимо указать:
+- Имя и фамилия
+- Дата рождения
+- Должность
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
 
-## Add your files
+### III. Расписание курсов
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+**3.1. Календарь курсов**  
+Система должна хранить информацию о расписании проведения курсов:
+- Дата начала курса
+- Дата дедлайна для регистрации на прохождение (покупки)
+- Информация о наличии мест
 
-```
-cd existing_repo
-git remote add origin https://gitlab.sqlwars.ru/dbd25/M3200_KhudyakovAA.git
-git branch -M main
-git push -uf origin main
-```
+**3.2. Связь с другими объектами**  
+- Каждая отметка в календаре курсов должна соответствовать непосредственно существующему курсу
 
-## Integrate with your tools
 
-- [ ] [Set up project integrations](https://gitlab.sqlwars.ru/dbd25/M3200_KhudyakovAA/-/settings/integrations)
+### IV. Преподаватели
 
-## Collaborate with your team
+**4.1. Информация о преподавателе**  
+- Имя и фамилия
+- Текущее место работы
+- Количество лет опыта в сфере в общем; конкретно в этой специализации
+- Фотография
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+Например:
 
-## Test and Deploy
+***Иван Иванов***  
+*Старший разработчик в Тындекс <любой сервис>. Программирует 10 лет, последние 5 — на Brainfuck. Разрабатывает архитектуру очень медленных систем. Входит в Brainfuck‑комитет Тындекса.*
 
-Use the built-in continuous integration in GitLab.
+**4.2. Принадлежность к курсу**  
+- Должна быть информация, к каким курсам относится преподаватель
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
 
-***
+### V. Взаимодействие с пользователями
 
-# Editing this README
+**5.1. Регистрация пользователей**  
+Система должна позволять новым пользователям регистрироваться. При этом пользователь указывает:
+- Имя и фамилия
+- Дата рождения
+- Электронная почта
+- Пароль
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+**5.2. Аутентификация пользователей**  
+Зарегистрированные пользователи должны иметь возможность войти в систему, используя электронную почту и пароль.
 
-## Suggestions for a good README
+**5.3. Управление профилем**  
+Пользователь может редактировать свой профиль; добавлять информацию о себе:
+- Фотография
+- Номер телефона
+- СНИЛС
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
 
-## Name
-Choose a self-explaining name for your project.
+### VI. Покупка курсов
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+**6.1. Выбор курса**  
+Пользователь должен иметь возможность купить любой доступный курс. Система должна:
+- Отображать актуальные и доступные курсы для покупки
+- Позволять пользователю видеть информацию об актуальной цене курса
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+**6.2. Виды курсов**  
+Должна быть возможность приобрети курс:
+- Базовый
+- С расширенным карьерным треком
+- Льготный
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+**6.3. Информация о заказе**  
+Система должна сохранять информацию по каждому купленному курсу (в одном заказе может быть только один курс):
+- ID пользователя
+- Дата и время заказа
+- Вид курса
+- Итоговая сумма заказа
+- Статус (оплачен/неоплачен)
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### VII. Карьерный центр
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+**7.1. Информация о пользователях, находящихся в ведении карьерного центра**  
+Система должна хранить следующую информацию о пользователях, находящихся в её ведении:
+- Имя и фамилия
+- Пройденный курс
+- Актуальное резюме
+- Дата начала карьерного сопровождения
+- Период сопровождения (расширенный или нет)
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+**7.2. Информация о компаниях-партнёрах**  
+Система должна хранить информацию о компаниях партнёрах, с которыми заключены соглашения
+- Название компании (короткое и полное юридическое наименование)
+- Количество выпускников, принятых в компанию партнёр
+- Требования к кандидатам
+- Статус соглашения (активное или нет)
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### VIII. Блог
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+**8.1. Информация о статьях**  
+Система должна хранить информацию обо всех опубликованных статьях, каждая из которых включает:
+- Название
+- Автор статьи
+- Дата публикации
+- Тема
+- Примерное время на прочтение статьи
+- Обложка
+- Содержание
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+**8.2. Связь с другими объектами**  
+Автор статьи является конкретным SMM-менеджером, зарегистрированным в системе
