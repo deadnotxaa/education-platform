@@ -2,22 +2,22 @@ services:
   db:
     image: postgres:13
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: adminpassword
-      POSTGRES_DB: mydatabase
+      POSTGRES_USER: ${POSTGRES_INIT_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_INIT_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d mydatabase"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_INIT_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   flyway:
     image: flyway/flyway:7.15.0
-    command: -url=jdbc:postgresql://db:5432/mydatabase -user=admin -password=adminpassword -connectRetries=60 migrate -target=${MIGRATION_VERSION:-latest}
+    command: -url=jdbc:postgresql://db:5432/${POSTGRES_DB} -user=${DB_USER} -password=${DB_PASSWORD} -connectRetries=60 migrate -target=${MIGRATION_VERSION:-latest}
     depends_on:
       db:
         condition: service_healthy
@@ -30,13 +30,13 @@ services:
       context: .
       dockerfile: Dockerfile.seeder
     environment:
-      - APP_ENV=${APP_ENV:-prod}
-      - SEED_COUNT=${SEED_COUNT:-10}
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USER=admin
-      - DB_PASSWORD=adminpassword
-      - DB_NAME=mydatabase
+      - APP_ENV=${APP_ENV}
+      - SEED_COUNT=${SEED_COUNT}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
     depends_on:
       db:
         condition: service_healthy
@@ -47,17 +47,17 @@ services:
   role_setup:
     image: postgres:13
     environment:
-      - PGHOST=db
-      - PGPORT=5432
-      - PGUSER=admin
-      - PGPASSWORD=adminpassword
-      - PGDB=mydatabase
-      - ANALYST_NAMES=${ANALYST_NAMES:-}
+      - PGHOST=${DB_HOST}
+      - PGPORT=${DB_PORT}
+      - PGUSER=${DB_USER}
+      - PGPASSWORD=${DB_PASSWORD}
+      - PGDB=${DB_NAME}
+      - ANALYST_NAMES=${ANALYST_NAMES}
     volumes:
       - ./scripts/create_analytic_role.sql:/create_analytic_role.sql
       - ./scripts/create_analyst_users.sh:/create_analyst_users.sh
     command: >
-      sh -c "psql -h db -p 5432 -U admin -d mydatabase -f /create_analytic_role.sql &&
+      sh -c "psql -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} -f /create_analytic_role.sql &&
              chmod +x /create_analyst_users.sh &&
              /create_analyst_users.sh"
     depends_on:

@@ -1,2 +1,5 @@
 # GoLand
 **/.idea
+
+# ENV
+.env 
