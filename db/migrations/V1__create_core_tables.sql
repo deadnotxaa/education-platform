@@ -1,12 +1,12 @@
 CREATE TABLE IF NOT EXISTS difficulty_level (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) UNIQUE NOT NULL,
     description TEXT
 );
 
 CREATE TABLE IF NOT EXISTS course_specialization (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) UNIQUE NOT NULL,
     description TEXT
 );
 

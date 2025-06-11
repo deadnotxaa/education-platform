@@ -18,5 +18,6 @@ END $$;
 SELECT 'CREATE DATABASE mydatabase OWNER appuser'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'mydatabase')\gexec
 
--- Grant privileges to appuser
+-- Grant privileges to appuser on the public schema
 GRANT ALL PRIVILEGES ON DATABASE mydatabase TO appuser;
+GRANT USAGE, CREATE ON SCHEMA public TO appuser;

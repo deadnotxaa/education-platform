@@ -1,0 +1,12 @@
+FROM golang:1.22
+
+WORKDIR /app/client
+
+COPY client/go.mod .
+COPY client/main.go .
+
+RUN go mod tidy
+RUN go build -o client .
+RUN chmod +x client
+
+CMD ["./client"]

@@ -2,10 +2,19 @@ FROM golang:1.22
 
 WORKDIR /app
 
-COPY scripts/go.mod ./scripts/
-COPY scripts/main.go ./scripts/
-WORKDIR /app/scripts
+COPY scripts/seeding/go.mod scripts/seeding/
+COPY scripts/seeding/main.go scripts/seeding/
+COPY scripts/seeding/config/config.go scripts/seeding/config/
+COPY scripts/seeding/internal/db_utils/db.go scripts/seeding/internal/db_utils/
+COPY scripts/seeding/internal/seed/seed.go scripts/seeding/internal/seed/
+COPY scripts/seeding/internal/versions/seeding_utils.go scripts/seeding/internal/versions/
+COPY scripts/seeding/internal/versions/v1_create_core_tables_seeder.go scripts/seeding/internal/versions/
+COPY scripts/seeding/internal/versions/v2_create_user_and_employee_tables_seeder.go scripts/seeding/internal/versions/
+COPY scripts/seeding/internal/versions/v3_create_additional_tables_seeder.go scripts/seeding/internal/versions/
+
+WORKDIR /app/scripts/seeding
 RUN go mod tidy
 RUN go build -o /app/seeder main.go
 
+EXPOSE 8080
 CMD ["/app/seeder"]

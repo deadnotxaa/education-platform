@@ -1,8 +1,12 @@
 CREATE TABLE IF NOT EXISTS seeding_status (
     id SERIAL PRIMARY KEY,
-    seeded BOOLEAN NOT NULL DEFAULT FALSE,
+    migration_version INTEGER NOT NULL DEFAULT 0,
+    table_name VARCHAR(255),
+    success BOOLEAN NOT NULL DEFAULT FALSE,
     seeded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert a single row to initialize the status
-INSERT INTO seeding_status (seeded) VALUES (FALSE) ON CONFLICT DO NOTHING;
+-- Insert a main tracking record (with null table_name)
+INSERT INTO seeding_status (migration_version, success, table_name)
+VALUES (0, true, NULL)
+ON CONFLICT DO NOTHING;
