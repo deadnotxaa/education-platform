@@ -3,10 +3,10 @@ package db_utils
 import (
     "database/sql"
     "fmt"
+    _ "github.com/lib/pq"
     "log"
     "seeder/config"
     "time"
-    _ "github.com/lib/pq" // PostgreSQL driver
 )
 
 type DB struct {
@@ -48,7 +48,7 @@ func (db *DB) connectToDB() error {
         db.cfg.DBConfig.DbHost, db.cfg.DBConfig.DbPort, db.cfg.DBConfig.DbName, db.cfg.DBConfig.DbUser)
 
     for i := 0; i < 60; i++ {
-        conn, err := sql.Open("postgres", connStr)  // Changed from "haproxy" to "postgres"
+        conn, err := sql.Open("postgres", connStr)
 
         if err != nil {
             log.Printf("Failed to open DB: %v, retrying...", err)

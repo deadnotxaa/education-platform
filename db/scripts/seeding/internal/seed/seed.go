@@ -82,13 +82,3 @@ func checkMigrationVersion(dbInstance *db_utils.DB) (int, error) {
 
     return version, nil
 }
-
-func SetMigrationVersion(dbInstance *db_utils.DB, version int) error {
-	_, err := dbInstance.Conn.Exec("UPDATE seeding_status SET migration_version = $1", version)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("[post] Migration version set to %d", version)
-	return nil
-}

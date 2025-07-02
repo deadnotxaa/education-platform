@@ -86,7 +86,7 @@ services:
       patroni3:
         condition: service_healthy
     networks:
-      - etcd_patroni  # Add this line to join the network
+      - etcd_patroni
 
   patroni1:
     image: patroni

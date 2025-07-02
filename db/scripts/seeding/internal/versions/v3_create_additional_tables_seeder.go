@@ -30,7 +30,6 @@ func SeedV3(seedCfg *config.SeedConfig, db *db_utils.DB) error {
         log.Println("Seeding course_type table completed successfully")
     }
 
-    // Continue for all tables in V3...
     err = SeedTable(db.Conn, version, "purchase", func() error {
         return seedPurchase(db.Conn, seedCfg.SeedCount)
     })
@@ -131,7 +130,7 @@ func seedCourseCalendar(db *sql.DB, seedCount int) error {
     for i := 0; i < seedCount; i++ {
         courseID := courseIDs[gofakeit.Number(0, len(courseIDs)-1)]
         startDate := gofakeit.Date()
-        endSalesDate := gofakeit.DateRange(startDate, gofakeit.Date())  // Ensure end date is after start
+        endSalesDate := gofakeit.DateRange(startDate, gofakeit.Date())
         remainingPlaces := gofakeit.Number(0, 100)
 
         _, err = db.Exec(query, courseID, startDate, endSalesDate, remainingPlaces)
@@ -176,19 +175,16 @@ func seedPurchase(db *sql.DB, seedCount int) error {
         return nil
     }
 
-    // Get actual existing user IDs
     userIDs, err := getExistingIDs(db, "user", "account_id")
     if err != nil {
         return fmt.Errorf("failed to get user ids: %v", err)
     }
 
-    // Get actual existing course IDs
     courseIDs, err := getExistingIDs(db, "course", "course_id")
     if err != nil {
         return fmt.Errorf("failed to get course ids: %v", err)
     }
 
-    // Get actual existing course type IDs
     courseTypeIDs, err := getExistingIDs(db, "course_type", "id")
     if err != nil {
         return fmt.Errorf("failed to get course type ids: %v", err)
@@ -198,7 +194,6 @@ func seedPurchase(db *sql.DB, seedCount int) error {
               VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`
 
     for i := 0; i < seedCount; i++ {
-        // Select random IDs from existing IDs
         userID := userIDs[gofakeit.Number(0, len(userIDs)-1)]
         courseID := courseIDs[gofakeit.Number(0, len(courseIDs)-1)]
         courseTypeID := courseTypeIDs[gofakeit.Number(0, len(courseTypeIDs)-1)]
@@ -245,13 +240,11 @@ func seedCareerCenterStudent(db *sql.DB, seedCount int) error {
         return nil
     }
 
-    // Get actual existing user IDs
     userIDs, err := getExistingIDs(db, "user", "account_id")
     if err != nil {
         return fmt.Errorf("failed to get user ids: %v", err)
     }
 
-    // Get actual existing course IDs
     courseIDs, err := getExistingIDs(db, "course", "course_id")
     if err != nil {
         return fmt.Errorf("failed to get course ids: %v", err)
@@ -281,13 +274,11 @@ func seedJobApplication(db *sql.DB, seedCount int) error {
         return nil
     }
 
-    // Get actual existing student IDs
     studentIDs, err := getExistingIDs(db, "career_center_student", "id")
     if err != nil {
         return fmt.Errorf("failed to get student ids: %v", err)
     }
 
-    // Get actual existing company IDs
     companyIDs, err := getExistingIDs(db, "partner_company", "company_id")
     if err != nil {
         return fmt.Errorf("failed to get company ids: %v", err)
@@ -316,7 +307,6 @@ func seedBlogPost(db *sql.DB, seedCount int) error {
         return fmt.Errorf("failed to seed blog_post, some tables not found")
     }
 
-    // Get actual existing employee IDs
     employeeIDs, err := getExistingIDs(db, "employee", "id")
     if err != nil {
         return fmt.Errorf("failed to get employee ids: %v", err)
@@ -396,13 +386,11 @@ func seedCourseReview(db *sql.DB, seedCount int) error {
         return fmt.Errorf("failed to seed course_review, some tables not found")
     }
 
-    // Get actual existing user IDs
     userIDs, err := getExistingIDs(db, "user", "account_id")
     if err != nil {
         return fmt.Errorf("failed to get user ids: %v", err)
     }
 
-    // Get actual existing course IDs
     courseIDs, err := getExistingIDs(db, "course", "course_id")
     if err != nil {
         return fmt.Errorf("failed to get course ids: %v", err)
@@ -432,13 +420,11 @@ func seedCertificate(db *sql.DB, seedCount int) error {
         return nil
     }
 
-    // Get actual existing user IDs
     userIDs, err := getExistingIDs(db, "user", "account_id")
     if err != nil {
         return fmt.Errorf("failed to get user ids: %v", err)
     }
 
-    // Get actual existing course IDs
     courseIDs, err := getExistingIDs(db, "course", "course_id")
     if err != nil {
         return fmt.Errorf("failed to get course ids: %v", err)

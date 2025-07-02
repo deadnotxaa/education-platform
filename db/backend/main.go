@@ -14,7 +14,6 @@ import (
 )
 
 var (
-	// Define Prometheus metrics
 	queryDuration = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
 			Name: "query_duration_seconds",
@@ -66,7 +65,6 @@ var (
 )
 
 func init() {
-	// Register metrics with Prometheus
 	prometheus.MustRegister(queryDuration)
 	prometheus.MustRegister(queryErrors)
 }
@@ -74,11 +72,18 @@ func init() {
 func main() {
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
+
 	db, err := sql.Open("postgres", connStr)
+
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err = db.Close()
+		if err != nil {
+			log.Printf("Error closing database connection: %v", err)
+		}
+	}(db)
 
 	http.HandleFunc("/query1", func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -91,8 +96,18 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer rows.Close()
-		fmt.Fprintf(w, "Query1 executed in %.2f seconds", duration)
+
+		defer func(rows *sql.Rows) {
+			err = rows.Close()
+			if err != nil {
+				log.Printf("Error closing rows: %v", err)
+			}
+		}(rows)
+
+		_, err = fmt.Fprintf(w, "Query1 executed in %.2f seconds", duration)
+		if err != nil {
+			log.Printf("Error executing query1: %v", err)
+		}
 	})
 
 	http.HandleFunc("/query2", func(w http.ResponseWriter, r *http.Request) {
@@ -106,8 +121,18 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer rows.Close()
-		fmt.Fprintf(w, "Query2 executed in %.2f seconds", duration)
+
+		defer func(rows *sql.Rows) {
+			err = rows.Close()
+			if err != nil {
+				log.Printf("Error closing rows: %v", err)
+			}
+		}(rows)
+
+		_, err = fmt.Fprintf(w, "Query2 executed in %.2f seconds", duration)
+		if err != nil {
+			log.Printf("Error executing query2: %v", err)
+		}
 	})
 
 	http.HandleFunc("/query3", func(w http.ResponseWriter, r *http.Request) {
@@ -121,11 +146,20 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer rows.Close()
-		fmt.Fprintf(w, "Query3 executed in %.2f seconds", duration)
+
+		defer func(rows *sql.Rows) {
+			err = rows.Close()
+			if err != nil {
+				log.Printf("Error closing rows: %v", err)
+			}
+		}(rows)
+
+		_, err = fmt.Fprintf(w, "Query3 executed in %.2f seconds", duration)
+		if err != nil {
+			return
+		}
 	})
 
-	// Add Prometheus metrics endpoint
 	http.Handle("/metrics", promhttp.Handler())
 
 	log.Fatal(http.ListenAndServe(":8081", nil))

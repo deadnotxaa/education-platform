@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS seeding_status (
     seeded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert a main tracking record (with null table_name)
+-- Main tracking record (with null table_name)
 INSERT INTO seeding_status (migration_version, success, table_name)
 VALUES (0, true, NULL)
 ON CONFLICT DO NOTHING;

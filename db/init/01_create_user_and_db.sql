@@ -1,4 +1,3 @@
--- Create application user with CREATEDB and CREATEROLE privileges
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'appuser') THEN
@@ -6,7 +5,6 @@ BEGIN
   END IF;
 END $$;
 
--- Grant CREATEROLE if not already granted
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'appuser' AND rolcreaterole = true) THEN
@@ -14,10 +12,9 @@ BEGIN
   END IF;
 END $$;
 
--- Create database if it doesn't exist
-SELECT 'CREATE DATABASE mydatabase OWNER appuser'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'mydatabase')\gexec
+SELECT 'CREATE DATABASE postgres OWNER appuser'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'postgres')\gexec
 
 -- Grant privileges to appuser on the public schema
-GRANT ALL PRIVILEGES ON DATABASE mydatabase TO appuser;
+GRANT ALL PRIVILEGES ON DATABASE postgres TO appuser;
 GRANT USAGE, CREATE ON SCHEMA public TO appuser;
