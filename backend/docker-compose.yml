@@ -1,0 +1,62 @@
+volumes:
+  postgres_data:
+
+networks:
+  backend_network:
+    driver: bridge
+
+x-backend-env: &backend-env
+    APP_NAME: "platform-backend"
+    LOG_LEVEL: "info"
+    SWAGGER_ENABLED: "true"
+    METRICS_ENABLED: "true"
+    HTTP_PORT: "8080"
+    HTTP_USE_PREFORK_MODE: "false"
+
+x-postgres-env: &postgres-env
+    PG_USER: "postgres"
+    PG_PASS: "postgres"
+    PG_HOST: "db"
+    PG_PORT: "5432"
+    PG_NAME: "postgres"
+    PG_POOL_MAX: "10"
+    POSTGRES_USER: "postgres"
+    POSTGRES_PASSWORD: "postgres"
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      <<: *postgres-env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      <<: *backend-env
+      PG_USER: "postgres"
+      PG_PASS: "postgres"
+      PG_HOST: "db"
+      PG_PORT: "5432"
+      PG_NAME: "postgres"
+      PG_POOL_MAX: "10"
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend_network
