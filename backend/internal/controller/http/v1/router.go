@@ -7,13 +7,30 @@ import (
     "github.com/gofiber/fiber/v2"
 )
 
-// NewTranslationRoutes -.
-func NewTranslationRoutes(apiV1Group fiber.Router, p usecase.Platform, l logger.Interface) {
+// NewCourseRoutes -.
+func NewCourseRoutes(apiV1Group fiber.Router, p usecase.Platform, l logger.Interface) {
     r := &V1{p: p, l: l, v: validator.New(validator.WithRequiredStructEnabled())}
 
-    translationGroup := apiV1Group.Group("/course")
-
+    courseGroup := apiV1Group.Group("/course")
     {
-        translationGroup.Get("/getcourse", r.getCourse)
+        courseGroup.Get("/getcourse", r.getCourse)
+    }
+}
+
+func NewUserRoutes(apiV1Group fiber.Router, p usecase.Platform, l logger.Interface) {
+    r := &V1{p: p, l: l, v: validator.New(validator.WithRequiredStructEnabled())}
+
+    userGroup := apiV1Group.Group("/user")
+    {
+        userGroup.Get("/getuser", r.getUser)
+    }
+}
+
+func NewReportRoutes(apiV1Group fiber.Router, p usecase.Platform, l logger.Interface) {
+    r := &V1{p: p, l: l, v: validator.New(validator.WithRequiredStructEnabled())}
+
+    userGroup := apiV1Group.Group("/report")
+    {
+        userGroup.Get("/get-top-courses-report", r.getTopCoursesReport)
     }
 }

@@ -27,3 +27,21 @@ func (us *UseCase) GetCourseById(ctx context.Context, courseID int) (entity.Cour
 
     return course, nil
 }
+
+func (us *UseCase) GetUserById(ctx context.Context, userID int) (entity.User, error) {
+    user, err := us.repo.GetUserById(ctx, userID)
+    if err != nil {
+        return entity.User{}, fmt.Errorf("platform - GetUser - repo.GetUser: %w", err)
+    }
+
+    return user, nil
+}
+
+func (us *UseCase) GetTopCoursesReport(ctx context.Context, limit uint32) ([]entity.TopCoursesReport, error) {
+    report, err := us.repo.GetTopCoursesReport(ctx, limit)
+    if err != nil {
+        return nil, fmt.Errorf("platform - GetTopCoursesReport - repo.GetTopCoursesReport: %w", err)
+    }
+
+    return report, nil
+}
