@@ -13,7 +13,7 @@ import (
 func SeedV2(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     version := 2
 
-    err := SeedTable(db.Conn, version, "user", func() error {
+    err := SeedTable(db.Conn, version, "users", func() error {
         return seedUser(db.Conn, seedCfg.SeedCount)
     })
     if err != nil {
@@ -62,11 +62,11 @@ func SeedV2(seedCfg *config.SeedConfig, db *db_utils.DB) error {
 }
 
 func seedUser(db *sql.DB, seedCount int) error {
-	if tablesExists(db, []string{"user"}) != true {
+	if tablesExists(db, []string{"users"}) != true {
 		return nil
 	}
 
-	query := `INSERT INTO "user" (name, surname, birthdate, email, hashed_password, profile_picture_url, phone_number, snils_number)
+	query := `INSERT INTO users (name, surname, birthdate, email, hashed_password, profile_picture_url, phone_number, snils_number)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING`
 
 	for i := 0; i < seedCount; i++ {
@@ -116,9 +116,9 @@ func seedEmployee(db *sql.DB, seedCount int) error {
 		return nil
 	}
 
-	userIDs, err := getExistingIDs(db, "user", "account_id")
+	userIDs, err := getExistingIDs(db, "users", "account_id")
 	if err != nil {
-		return fmt.Errorf("failed to get user ids: %v", err)
+		return fmt.Errorf("failed to get users ids: %v", err)
 	}
 
 	if len(userIDs) == 0 {

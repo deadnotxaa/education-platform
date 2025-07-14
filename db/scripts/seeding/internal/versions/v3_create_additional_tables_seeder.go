@@ -175,7 +175,7 @@ func seedPurchase(db *sql.DB, seedCount int) error {
         return nil
     }
 
-    userIDs, err := getExistingIDs(db, "user", "account_id")
+    userIDs, err := getExistingIDs(db, "users", "account_id")
     if err != nil {
         return fmt.Errorf("failed to get user ids: %v", err)
     }
@@ -240,7 +240,7 @@ func seedCareerCenterStudent(db *sql.DB, seedCount int) error {
         return nil
     }
 
-    userIDs, err := getExistingIDs(db, "user", "account_id")
+    userIDs, err := getExistingIDs(db, "users", "account_id")
     if err != nil {
         return fmt.Errorf("failed to get user ids: %v", err)
     }
@@ -382,11 +382,11 @@ func seedPostTag(db *sql.DB, seedCount int) error {
 }
 
 func seedCourseReview(db *sql.DB, seedCount int) error {
-    if tablesExists(db, []string{"course_review", "course", "user"}) != true {
+    if tablesExists(db, []string{"course_review", "course", "users"}) != true {
         return fmt.Errorf("failed to seed course_review, some tables not found")
     }
 
-    userIDs, err := getExistingIDs(db, "user", "account_id")
+    userIDs, err := getExistingIDs(db, "users", "account_id")
     if err != nil {
         return fmt.Errorf("failed to get user ids: %v", err)
     }
@@ -416,11 +416,11 @@ func seedCourseReview(db *sql.DB, seedCount int) error {
 }
 
 func seedCertificate(db *sql.DB, seedCount int) error {
-    if tablesExists(db, []string{"certificate", "user", "course"}) != true {
+    if tablesExists(db, []string{"certificate", "users", "course"}) != true {
         return nil
     }
 
-    userIDs, err := getExistingIDs(db, "user", "account_id")
+    userIDs, err := getExistingIDs(db, "users", "account_id")
     if err != nil {
         return fmt.Errorf("failed to get user ids: %v", err)
     }

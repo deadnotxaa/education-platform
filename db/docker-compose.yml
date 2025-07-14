@@ -1,3 +1,19 @@
+x-backend-env: &backend-env
+  APP_NAME: "platform-backend"
+  LOG_LEVEL: "debug"
+  SWAGGER_ENABLED: "true"
+  METRICS_ENABLED: "true"
+  HTTP_PORT: "8080"
+  HTTP_USE_PREFORK_MODE: "false"
+  PG_USER: "postgres"
+  PG_PASS: "postgres"
+  PG_HOST: "haproxy"
+  PG_PORT: "5001"
+  PG_NAME: "postgres"
+  PG_POOL_MAX: "10"
+  POSTGRES_USER: "postgres"
+  POSTGRES_PASSWORD: "postgres"
+
 services:
   etcd1:
     image: quay.io/coreos/etcd:v3.5.9
@@ -230,42 +246,38 @@ services:
     networks:
       - etcd_patroni
 
-  role_setup:
-    image: postgres:latest
-    environment:
-      - PGHOST=haproxy
-      - PGPORT=5001
-      - PGUSER=${DB_USER}
-      - PGPASSWORD=${DB_PASSWORD}
-      - PGDB=${DB_NAME}
-      - ANALYST_NAMES=${ANALYST_NAMES}
-    volumes:
-      - ./scripts/create_analytic_role.sql:/create_analytic_role.sql
-      - ./scripts/create_analyst_users.sh:/create_analyst_users.sh
-    command: >
-      sh -c "psql -h ${PGHOST} -p ${PGPORT} -U ${PGUSER} -d ${PGDB} -f /create_analytic_role.sql &&
-             chmod +x /create_analyst_users.sh &&
-             /create_analyst_users.sh"
-    depends_on:
-      haproxy:
-        condition: service_healthy
-      flyway:
-        condition: service_completed_successfully
-    networks:
-      - etcd_patroni
+#  role_setup:
+#    image: postgres:latest
+#    environment:
+#      - PGHOST=haproxy
+#      - PGPORT=5001
+#      - PGUSER=${DB_USER}
+#      - PGPASSWORD=${DB_PASSWORD}
+#      - PGDB=${DB_NAME}
+#      - ANALYST_NAMES=${ANALYST_NAMES}
+#    volumes:
+#      - ./scripts/create_analytic_role.sql:/create_analytic_role.sql
+#      - ./scripts/create_analyst_users.sh:/create_analyst_users.sh
+#    command: >
+#      sh -c "psql -h ${PGHOST} -p ${PGPORT} -U ${PGUSER} -d ${PGDB} -f /create_analytic_role.sql &&
+#             chmod +x /create_analyst_users.sh &&
+#             /create_analyst_users.sh"
+#    depends_on:
+#      haproxy:
+#        condition: service_healthy
+#      flyway:
+#        condition: service_completed_successfully
+#    networks:
+#      - etcd_patroni
 
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ../backend
+      dockerfile: Dockerfile
     environment:
-      - DB_HOST=haproxy
-      - DB_PORT=5000
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      <<: *backend-env
     ports:
-      - "8081:8081"
+      - "8080:8080"
     depends_on:
       haproxy:
         condition: service_healthy
@@ -276,14 +288,14 @@ services:
     networks:
       - etcd_patroni
 
-  client:
-    build:
-      context: .
-      dockerfile: Dockerfile.client
-    depends_on:
-      - backend
-    networks:
-      - etcd_patroni
+#  client:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.client
+#    depends_on:
+#      - backend
+#    networks:
+#      - etcd_patroni
 
   prometheus:
     image: prom/prometheus:latest
@@ -315,32 +327,32 @@ services:
     networks:
       - etcd_patroni
 
-  backup:
-    image: postgres:latest
-    environment:
-      - PGHOST=haproxy
-      - PGPORT=5001
-      - PGUSER=${DB_USER}
-      - PGPASSWORD=${DB_PASSWORD}
-      - PGDB=${DB_NAME}
-      - BACKUP_INTERVAL_CRON=${BACKUP_INTERVAL_CRON:-'0 0 * * *'}
-      - BACKUP_RETENTION_COUNT=${BACKUP_RETENTION_COUNT:-5}
-    volumes:
-      - ./scripts/backup_db.sh:/backup_db.sh
-      - backup_data:/backups
-    command: >
-      sh -c "apt-get update && apt-get install -y cron &&
-             echo \"$BACKUP_INTERVAL_CRON /bin/sh /backup_db.sh\" > /etc/cron.d/backup-cron &&
-             chmod 0644 /etc/cron.d/backup-cron &&
-             crontab /etc/cron.d/backup-cron &&
-             cron -f"
-    depends_on:
-      haproxy:
-        condition: service_healthy
-      flyway:
-        condition: service_completed_successfully
-    networks:
-      - etcd_patroni
+#  backup:
+#    image: postgres:latest
+#    environment:
+#      - PGHOST=haproxy
+#      - PGPORT=5001
+#      - PGUSER=${DB_USER}
+#      - PGPASSWORD=${DB_PASSWORD}
+#      - PGDB=${DB_NAME}
+#      - BACKUP_INTERVAL_CRON=${BACKUP_INTERVAL_CRON:-'0 0 * * *'}
+#      - BACKUP_RETENTION_COUNT=${BACKUP_RETENTION_COUNT:-5}
+#    volumes:
+#      - ./scripts/backup_db.sh:/backup_db.sh
+#      - backup_data:/backups
+#    command: >
+#      sh -c "apt-get update && apt-get install -y cron &&
+#             echo \"$BACKUP_INTERVAL_CRON /bin/sh /backup_db.sh\" > /etc/cron.d/backup-cron &&
+#             chmod 0644 /etc/cron.d/backup-cron &&
+#             crontab /etc/cron.d/backup-cron &&
+#             cron -f"
+#    depends_on:
+#      haproxy:
+#        condition: service_healthy
+#      flyway:
+#        condition: service_completed_successfully
+#    networks:
+#      - etcd_patroni
 
 networks:
   etcd_patroni:
@@ -356,3 +368,4 @@ volumes:
   prometheus_data:
   grafana_data:
   backup_data:
+
