@@ -106,12 +106,20 @@ func (r *BackendRepo) GetTopCoursesReport(ctx context.Context, limit uint32) ([]
 
     for rows.Next() {
         e := entity.TopCoursesReport{}
+        var teachersWorkPlaces *string
 
         err = rows.Scan(&e.CourseName, &e.DifficultyLevel, &e.Duration, &e.AverageRating,
-            e.TotalReviews, &e.TeachersWorkPlaces)
+            &e.TotalReviews, &teachersWorkPlaces)
 
         if err != nil {
             return nil, fmt.Errorf("BackendRepo - GetTopCoursesReport - rows.Scan: %w", err)
+        }
+
+        // Handle nullable teachers_work_places
+        if teachersWorkPlaces != nil {
+            e.TeachersWorkPlaces = *teachersWorkPlaces
+        } else {
+            e.TeachersWorkPlaces = ""
         }
 
         entities = append(entities, e)

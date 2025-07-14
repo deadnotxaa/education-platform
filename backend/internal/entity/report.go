@@ -9,7 +9,7 @@ type (
         DifficultyLevel    string  `json:"difficulty_level"     example:"Advanced"`
         Duration           int     `json:"duration"             example:"30"` // Duration in days
         AverageRating      float64 `json:"average_rating"       example:"4.5"`
-        TotalReviews       int     `json:"total_reviews"        example:"150"`
+        TotalReviews       int64   `json:"total_reviews"        example:"150"`
         TeachersWorkPlaces string  `json:"teachers_work_places" example:"Ozon, Tindex, U-Bank"`
     }
 
