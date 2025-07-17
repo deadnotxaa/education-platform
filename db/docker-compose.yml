@@ -13,6 +13,12 @@ x-backend-env: &backend-env
   PG_POOL_MAX: "10"
   POSTGRES_USER: "postgres"
   POSTGRES_PASSWORD: "postgres"
+  REDIS_USER: "redis"
+  REDIS_PASS: "redis"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_DB_NAME: "0"
+  REDIS_POOL_MAX: "10"
 
 services:
   etcd1:
@@ -125,6 +131,7 @@ services:
       PATRONI_POSTGRESQL_LISTEN: 0.0.0.0:5432
     volumes:
       - patroni1-data:/var/lib/postgresql/data
+    shm_size: 1gb
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:8008/health"]
       interval: 10s
@@ -159,6 +166,7 @@ services:
       PATRONI_POSTGRESQL_LISTEN: 0.0.0.0:5432
     volumes:
       - patroni2-data:/var/lib/postgresql/data
+    shm_size: 1gb
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:8008/health"]
       interval: 10s
@@ -193,6 +201,7 @@ services:
       PATRONI_POSTGRESQL_LISTEN: 0.0.0.0:5432
     volumes:
       - patroni3-data:/var/lib/postgresql/data
+    shm_size: 1gb
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:8008/health"]
       interval: 10s
@@ -270,6 +279,23 @@ services:
 #    networks:
 #      - etcd_patroni
 
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    environment:
+      <<: *backend-env
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli --user redis --pass redis ping | grep PONG" ]
+      interval: 1s
+      timeout: 3s
+      retries: 50
+    networks:
+      - etcd_patroni
+
   backend:
     build:
       context: ../backend
@@ -285,6 +311,8 @@ services:
         condition: service_completed_successfully
       seeder:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     networks:
       - etcd_patroni
 
@@ -368,4 +396,3 @@ volumes:
   prometheus_data:
   grafana_data:
   backup_data:
-
