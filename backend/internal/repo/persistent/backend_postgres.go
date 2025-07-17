@@ -3,23 +3,26 @@ package persistent
 import (
     "context"
     "fmt"
+    "github.com/deadnotxaa/education-platform/backend/internal/repo"
+    "log"
 
     "github.com/deadnotxaa/education-platform/backend/internal/entity"
     "github.com/deadnotxaa/education-platform/backend/pkg/postgres"
 )
 
-// BackendRepo -.
-type BackendRepo struct {
+// PostgresRepo -.
+type PostgresRepo struct {
     *postgres.Postgres
+    rr repo.RedisRepo
 }
 
 // New -.
-func New(pg *postgres.Postgres) *BackendRepo {
-    return &BackendRepo{pg}
+func New(pg *postgres.Postgres, rr repo.RedisRepo) *PostgresRepo {
+    return &PostgresRepo{pg, rr}
 }
 
 // GetCourseById -.
-func (r *BackendRepo) GetCourseById(ctx context.Context, courseID int) (entity.Course, error) {
+func (r *PostgresRepo) GetCourseById(ctx context.Context, courseID int) (entity.Course, error) {
     sql, args, err := r.Builder.
         Select("course_id", "name", "description", "specialization_id", "duration", "price", "difficulty_level_id",
             "created_at", "updated_at").
@@ -28,7 +31,7 @@ func (r *BackendRepo) GetCourseById(ctx context.Context, courseID int) (entity.C
         ToSql()
 
     if err != nil {
-        return entity.Course{}, fmt.Errorf("BackendRepo - GetCourse - r.Builder: %w", err)
+        return entity.Course{}, fmt.Errorf("PostgresRepo - GetCourse - r.Builder: %w", err)
     }
 
     row := r.Pool.QueryRow(ctx, sql, args...)
@@ -40,10 +43,10 @@ func (r *BackendRepo) GetCourseById(ctx context.Context, courseID int) (entity.C
         &ent.DifficultyLevelID, &createdAt, &updatedAt)
 
     if err != nil {
-        return entity.Course{}, fmt.Errorf("BackendRepo - GetCourse - row.Scan: %w", err)
+        return entity.Course{}, fmt.Errorf("PostgresRepo - GetCourse - row.Scan: %w", err)
     }
 
-    // Handle nullable timestamps TODO: change after redesign of the DB schema
+    // Handle nullable timestamps TODO: change after redesign of the Postgres schema
     if createdAt != nil {
         ent.CreatedAt = createdAt.(string)
     }
@@ -54,7 +57,7 @@ func (r *BackendRepo) GetCourseById(ctx context.Context, courseID int) (entity.C
     return ent, nil
 }
 
-func (r *BackendRepo) GetUserById(ctx context.Context, userID int) (entity.User, error) {
+func (r *PostgresRepo) GetUserById(ctx context.Context, userID int) (entity.User, error) {
     sql, args, err := r.Builder.
         Select("account_id", "name", "surname", "email").
         From("users").
@@ -62,7 +65,7 @@ func (r *BackendRepo) GetUserById(ctx context.Context, userID int) (entity.User,
         ToSql()
 
     if err != nil {
-        return entity.User{}, fmt.Errorf("BackendRepo - GetUserById - r.Builder: %w", err)
+        return entity.User{}, fmt.Errorf("PostgresRepo - GetUserById - r.Builder: %w", err)
     }
 
     row := r.Pool.QueryRow(ctx, sql, args...)
@@ -71,34 +74,41 @@ func (r *BackendRepo) GetUserById(ctx context.Context, userID int) (entity.User,
     err = row.Scan(&ent.AccountID, &ent.Name, &ent.Surname, &ent.Email)
 
     if err != nil {
-        return entity.User{}, fmt.Errorf("BackendRepo - GetUserById - row.Scan: %w", err)
+        return entity.User{}, fmt.Errorf("PostgresRepo - GetUserById - row.Scan: %w", err)
     }
 
     return ent, nil
 }
 
-func (r *BackendRepo) GetTopCoursesReport(ctx context.Context, limit uint32) ([]entity.TopCoursesReport, error) {
+func (r *PostgresRepo) GetTopCoursesReport(ctx context.Context, limit uint32) ([]entity.TopCoursesReport, error) {
+    // Try to get data from Redis first
+    report, err := r.rr.GetTopCoursesReport(ctx, limit)
+    if err == nil {
+       log.Printf("reports found in Redis cache for limit %d", limit)
+       return report, nil
+    }
+
     rows, err := r.Pool.Query(ctx,
         `SELECT 
             c.name AS course_name,
             dl.name AS difficulty_level,
             c.duration,
             AVG(cr.rating) AS avg_rating,
-            COUNT(cr.review_id) AS total_reviews,
-            STRING_AGG(DISTINCT t.work_place, ', ') AS teachers_work_places
+            COUNT(cr.review_id)::int AS total_reviews,
+            COALESCE(STRING_AGG(DISTINCT t.work_place, ', '), '') AS teachers_work_places
         FROM course c
         JOIN difficulty_level dl ON c.difficulty_level_id = dl.id
         LEFT JOIN course_review cr ON c.course_id = cr.course_id
         LEFT JOIN course_teacher ct ON c.course_id = ct.course_id
         LEFT JOIN teacher t ON ct.teacher_id = t.employee_id
-        GROUP BY c.course_id, dl.name, c.duration
+        GROUP BY c.course_id, c.name, dl.name, c.duration
         ORDER BY avg_rating DESC NULLS LAST
         LIMIT $1;`,
         limit,
     )
 
     if err != nil {
-        return nil, fmt.Errorf("BackendRepo - GetTopCoursesReport - r.Pool.Query: %w", err)
+        return nil, fmt.Errorf("PostgresRepo - GetTopCoursesReport - r.Pool.Query: %w", err)
     }
     defer rows.Close()
 
@@ -106,23 +116,20 @@ func (r *BackendRepo) GetTopCoursesReport(ctx context.Context, limit uint32) ([]
 
     for rows.Next() {
         e := entity.TopCoursesReport{}
-        var teachersWorkPlaces *string
 
         err = rows.Scan(&e.CourseName, &e.DifficultyLevel, &e.Duration, &e.AverageRating,
-            &e.TotalReviews, &teachersWorkPlaces)
+            &e.TotalReviews, &e.TeachersWorkPlaces)
 
         if err != nil {
-            return nil, fmt.Errorf("BackendRepo - GetTopCoursesReport - rows.Scan: %w", err)
-        }
-
-        // Handle nullable teachers_work_places
-        if teachersWorkPlaces != nil {
-            e.TeachersWorkPlaces = *teachersWorkPlaces
-        } else {
-            e.TeachersWorkPlaces = ""
+            return nil, fmt.Errorf("PostgresRepo - GetTopCoursesReport - rows.Scan: %w", err)
         }
 
         entities = append(entities, e)
+    }
+
+    err = r.rr.SetTopCoursesReport(ctx, limit, entities)
+    if err != nil {
+        return nil, fmt.Errorf("PostgresRepo - GetTopCoursesReport - r.rr.SetTopCoursesReport: %w", err)
     }
 
     return entities, nil

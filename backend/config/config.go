@@ -8,25 +8,34 @@ import (
 
 type (
     Config struct {
-        App App
-        DB  DB
-        Log Log
-        Swagger Swagger
-        Metrics Metrics
-        HTTP HTTP
+        App      App
+        Postgres Postgres
+        Log      Log
+        Swagger  Swagger
+        Metrics  Metrics
+        HTTP     HTTP
+        Redis    Redis
     }
 
     App struct {
         Name string `env:"APP_NAME,required"`
     }
 
-    DB struct {
+    Postgres struct {
         PostgresUser     string `env:"PG_USER,required"`
         PostgresPassword string `env:"PG_PASS,required"`
         PostgresHost     string `env:"PG_HOST,required"`
         PostgresPort     string `env:"PG_PORT,required"`
         PostgresDbName   string `env:"PG_NAME,required"`
         PoolMax          int    `env:"PG_POOL_MAX,required"`
+    }
+
+    Redis struct { // TODO: add connection pool and etc.
+        RedisUser     string `env:"REDIS_USER,required"`
+        RedisPassword string `env:"REDIS_PASS,required"`
+        RedisHost     string `env:"REDIS_HOST,required"`
+        RedisPort     string `env:"REDIS_PORT,required"`
+        RedisDbName   string `env:"REDIS_DB_NAME,required"`
     }
 
     // Log -.
@@ -36,12 +45,12 @@ type (
 
     // Swagger -.
     Swagger struct {
-        Enabled bool   `env:"SWAGGER_ENABLED" envDefault:"true"`
+        Enabled bool `env:"SWAGGER_ENABLED" envDefault:"true"`
     }
 
     // Metrics -.
     Metrics struct {
-        Enabled bool   `env:"METRICS_ENABLED" envDefault:"true"`
+        Enabled bool `env:"METRICS_ENABLED" envDefault:"true"`
     }
 
     // HTTP -.
