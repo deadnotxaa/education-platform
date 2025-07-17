@@ -11,7 +11,7 @@ import (
 func RunSeeding(cfg *config.Config) {
     dbInstance, err := db_utils.NewDB(cfg)
     if err != nil {
-        log.Fatalf("Could not connect to DB: %v", err)
+        log.Fatalf("Could not connect to Postgres: %v", err)
     }
 
     defer dbInstance.CloseConnection()

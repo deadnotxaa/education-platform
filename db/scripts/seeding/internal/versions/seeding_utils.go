@@ -4,7 +4,7 @@ import (
     "database/sql"
     "fmt"
     "github.com/lib/pq"
-    _ "strings"
+    "strings"
 )
 
 func trackSeedingStart(db *sql.DB, version int, tableName string) error {
@@ -211,4 +211,67 @@ func SeedTable(db *sql.DB, version int, tableName string, seedFunc func() error)
 
     fmt.Printf("Successfully seeded %s\n", tableName)
     return nil
+}
+
+// BatchInsertData performs batch inserts for better performance
+func BatchInsertData(db *sql.DB, query string, batchSize int, dataFunc func(int) []interface{}, totalCount int) error {
+    if totalCount == 0 {
+        return nil
+    }
+
+    // If total count is less than batch size, insert all at once
+    if totalCount <= batchSize {
+        return executeBatchInsert(db, query, dataFunc, totalCount)
+    }
+
+    // Process in batches
+    for i := 0; i < totalCount; i += batchSize {
+        currentBatchSize := batchSize
+        if i+batchSize > totalCount {
+            currentBatchSize = totalCount - i
+        }
+
+        if err := executeBatchInsert(db, query, func(idx int) []interface{} {
+            return dataFunc(i + idx)
+        }, currentBatchSize); err != nil {
+            return err
+        }
+    }
+
+    return nil
+}
+
+// executeBatchInsert executes a single batch insert
+func executeBatchInsert(db *sql.DB, baseQuery string, dataFunc func(int) []interface{}, batchSize int) error {
+    if batchSize == 0 {
+        return nil
+    }
+
+    // Get the first row to determine the number of columns
+    firstRow := dataFunc(0)
+    numCols := len(firstRow)
+
+    // Build the VALUES clause dynamically
+    var valuePlaceholders []string
+    var args []interface{}
+
+    for i := 0; i < batchSize; i++ {
+        row := dataFunc(i)
+        if len(row) != numCols {
+            return fmt.Errorf("inconsistent number of columns in row %d", i)
+        }
+
+        var placeholders []string
+        for j := 0; j < numCols; j++ {
+            placeholders = append(placeholders, fmt.Sprintf("$%d", len(args)+1))
+            args = append(args, row[j])
+        }
+        valuePlaceholders = append(valuePlaceholders, "("+strings.Join(placeholders, ", ")+")")
+    }
+
+    // Combine base query with VALUES clause and ON CONFLICT
+    fullQuery := baseQuery + " VALUES " + strings.Join(valuePlaceholders, ", ") + " ON CONFLICT DO NOTHING"
+
+    _, err := db.Exec(fullQuery, args...)
+    return err
 }
