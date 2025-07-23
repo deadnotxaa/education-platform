@@ -8,6 +8,7 @@ Mainly focused on database design, but also includes backend written in GoLang t
 
 - **Docker & Docker Compose** — containerization and orchestration
 - **PostgreSQL** — relational database management system
+- **Redis** – in-memory data structure store for caching
 - **Patroni & etcd** — automatically replicates DB for high availability and clustering
 - **GoLang** — backend development
 - **HAProxy** — load balancing
@@ -15,4 +16,3 @@ Mainly focused on database design, but also includes backend written in GoLang t
 - **GoLang & gofakeit** — data generation (seeding)
 - **Prometheus & Grafana** — monitoring and visualization
 - Also, simple bash script for backup
-

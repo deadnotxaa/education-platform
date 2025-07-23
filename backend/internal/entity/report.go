@@ -5,12 +5,12 @@ package entity
 type (
     // TopCoursesReport - represents a report of top courses with their details.
     TopCoursesReport struct {
-        CourseName         string   `json:"name"                 example:"Introduction to Go"`
-        DifficultyLevel    string   `json:"difficulty_level"     example:"Advanced"`
-        Duration           int      `json:"duration"             example:"30"` // Duration in days
-        AverageRating      *float64 `json:"average_rating"       example:"4.5"`
-        TotalReviews       int      `json:"total_reviews"        example:"150"`
-        TeachersWorkPlaces string   `json:"teachers_work_places" example:"Ozon, Tindex, U-Bank"`
+        CourseName         string  `json:"name"                 example:"Introduction to Go"`
+        DifficultyLevel    string  `json:"difficulty_level"     example:"Advanced"`
+        Duration           int     `json:"duration"             example:"30"` // Duration in days
+        AverageRating      float64 `json:"average_rating"       example:"4.5"`
+        TotalReviews       int     `json:"total_reviews"        example:"150"`
+        TeachersWorkPlaces string  `json:"teachers_work_places" example:"Ozon, Tindex, U-Bank"`
     }
 
     // DetailedPurchaseReport - represents a detailed report of a user's course purchase.
