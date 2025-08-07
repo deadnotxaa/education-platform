@@ -111,6 +111,8 @@ services:
       - etcd_patroni
 
   patroni1:
+    build:
+      context: ./patroni
     image: patroni
     container_name: patroni1
     hostname: patroni1
@@ -146,6 +148,8 @@ services:
       - etcd_patroni
 
   patroni2:
+    build:
+      context: ./patroni
     image: patroni
     container_name: patroni2
     hostname: patroni2
@@ -181,6 +185,8 @@ services:
       - etcd_patroni
 
   patroni3:
+    build:
+      context: ./patroni
     image: patroni
     container_name: patroni3
     hostname: patroni3
