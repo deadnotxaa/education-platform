@@ -2,17 +2,17 @@
 package http
 
 import (
-    v1 "github.com/deadnotxaa/education-platform/backend/internal/controller/http/v1"
-    "net/http"
+	"net/http"
 
-    "github.com/deadnotxaa/education-platform/backend/config"
-    "github.com/deadnotxaa/education-platform/backend/internal/controller/http/middleware"
-    "github.com/deadnotxaa/education-platform/backend/internal/usecase"
-    "github.com/deadnotxaa/education-platform/backend/pkg/logger"
+	"github.com/deadnotxaa/education-platform/backend/config"
+	"github.com/deadnotxaa/education-platform/backend/internal/controller/http/middleware"
+	v1 "github.com/deadnotxaa/education-platform/backend/internal/controller/http/v1"
+	"github.com/deadnotxaa/education-platform/backend/internal/usecase"
+	"github.com/deadnotxaa/education-platform/backend/pkg/logger"
 
-    "github.com/ansrivas/fiberprometheus/v2"
-    "github.com/gofiber/fiber/v2"
-    "github.com/gofiber/swagger"
+	"github.com/ansrivas/fiberprometheus/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/swagger"
 )
 
 // NewRouter -.

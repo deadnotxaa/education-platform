@@ -1,13 +1,13 @@
 package persistent
 
 import (
-    "context"
-    "fmt"
-    "github.com/deadnotxaa/education-platform/backend/internal/repo"
-    "log"
+	"context"
+	"fmt"
+	"log"
 
-    "github.com/deadnotxaa/education-platform/backend/internal/entity"
-    "github.com/deadnotxaa/education-platform/backend/pkg/postgres"
+	"github.com/deadnotxaa/education-platform/backend/internal/entity"
+	"github.com/deadnotxaa/education-platform/backend/internal/repo"
+	"github.com/deadnotxaa/education-platform/backend/pkg/postgres"
 )
 
 // PostgresRepo -.
