@@ -78,7 +78,7 @@ services:
   haproxy:
     build:
       context: .
-      dockerfile: Dockerfile.haproxy
+      dockerfile: config/docker/Dockerfile.haproxy
     container_name: haproxy
     hostname: haproxy
     dns:
@@ -89,7 +89,7 @@ services:
       PGUSER: postgres
       PGPASSWORD: postgres
     volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./config/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     ports:
       - "5432:5000"
       - "7070:7000"
@@ -224,6 +224,7 @@ services:
   flyway:
     image: flyway/flyway:10-alpine
     container_name: flyway
+    profiles: ["initial"]
     env_file: .env
     command: >
       -connectRetries=60
@@ -242,9 +243,10 @@ services:
 
   seeder:
     image: seeder:latest
+    profiles: ["initial"]
     build:
       context: .
-      dockerfile: Dockerfile.seeder
+      dockerfile: config/docker/Dockerfile.seeder
     environment:
       - APP_ENV=${APP_ENV}
       - SEED_COUNT=${SEED_COUNT}
@@ -292,7 +294,7 @@ services:
     environment:
       <<: *backend-env
     volumes:
-      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
     command: redis-server /usr/local/etc/redis/redis.conf
     healthcheck:
       test: [ "CMD-SHELL", "redis-cli --user redis --pass redis ping | grep PONG" ]
@@ -313,49 +315,64 @@ services:
     depends_on:
       haproxy:
         condition: service_healthy
-      flyway:
-        condition: service_completed_successfully
-      seeder:
-        condition: service_completed_successfully
+#      flyway:
+#        condition: service_completed_successfully
+#      seeder:
+#        condition: service_completed_successfully
       redis:
         condition: service_healthy
     networks:
       - etcd_patroni
 
-#  client:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile.client
-#    depends_on:
-#      - backend
-#    networks:
-#      - etcd_patroni
+  client:
+    build:
+      context: ../client
+      dockerfile: Dockerfile
+    container_name: load-test-client
+    profiles: ["benchmark"]
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - etcd_patroni
 
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
+    profiles: ["benchmark"]
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
     networks:
       - etcd_patroni
 
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    profiles: ["benchmark"]
     ports:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./dashboard.json:/etc/grafana/provisioning/dashboards/seeder_dashboard.json
-      - ./prometheus-datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml
+      - ./config/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./config/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./config/grafana/overview-dashboard.json:/etc/grafana/provisioning/dashboards/overview-dashboard.json
+      - ./config/grafana/course-dashboard.json:/etc/grafana/provisioning/dashboards/course-dashboard.json
+      - ./config/grafana/user-dashboard.json:/etc/grafana/provisioning/dashboards/user-dashboard.json
+      - ./config/grafana/report-dashboard.json:/etc/grafana/provisioning/dashboards/report-dashboard.json
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/seeder_dashboard.json
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/overview-dashboard.json
     depends_on:
       - prometheus
     networks:

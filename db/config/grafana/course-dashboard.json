@@ -1,0 +1,244 @@
+{
+  "id": null,
+  "title": "Course API Metrics",
+  "tags": ["backend", "course"],
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Course API Request Rate",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "rate(http_requests_total{path=\"/v1/course/getcourse\"}[5m])",
+          "legendFormat": "{{method}} {{status_code}}",
+          "refId": "A"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Requests per second",
+          "show": true
+        },
+        {
+          "show": true
+        }
+      ],
+      "xAxis": {
+        "show": true
+      },
+      "lines": true,
+      "fill": 1,
+      "linewidth": 2,
+      "pointradius": 2,
+      "points": false,
+      "bars": false,
+      "stack": false,
+      "percentage": false,
+      "legend": {
+        "show": true,
+        "values": false,
+        "min": false,
+        "max": false,
+        "current": false,
+        "total": false,
+        "avg": false
+      },
+      "nullPointMode": "null",
+      "steppedLine": false,
+      "tooltip": {
+        "value_type": "individual"
+      },
+      "datasource": "Prometheus"
+    },
+    {
+      "id": 2,
+      "title": "Course API Response Time",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{path=\"/v1/course/getcourse\"}[5m]))",
+          "legendFormat": "95th percentile",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{path=\"/v1/course/getcourse\"}[5m]))",
+          "legendFormat": "50th percentile",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(http_request_duration_seconds_sum{path=\"/v1/course/getcourse\"}[5m]) / rate(http_request_duration_seconds_count{path=\"/v1/course/getcourse\"}[5m])",
+          "legendFormat": "Average",
+          "refId": "C"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Response time (seconds)",
+          "show": true
+        },
+        {
+          "show": true
+        }
+      ],
+      "xAxis": {
+        "show": true
+      },
+      "lines": true,
+      "fill": 1,
+      "linewidth": 2,
+      "pointradius": 2,
+      "points": false,
+      "bars": false,
+      "stack": false,
+      "percentage": false,
+      "legend": {
+        "show": true,
+        "values": false,
+        "min": false,
+        "max": false,
+        "current": false,
+        "total": false,
+        "avg": false
+      },
+      "nullPointMode": "null",
+      "steppedLine": false,
+      "tooltip": {
+        "value_type": "individual"
+      },
+      "datasource": "Prometheus"
+    },
+    {
+      "id": 3,
+      "title": "Course API Total Requests",
+      "type": "singlestat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(http_requests_total{path=\"/v1/course/getcourse\"})",
+          "refId": "A"
+        }
+      ],
+      "valueName": "current",
+      "format": "short",
+      "datasource": "Prometheus",
+      "colorBackground": false,
+      "colorValue": false,
+      "thresholds": "",
+      "valueFontSize": "80%",
+      "prefixFontSize": "50%",
+      "postfixFontSize": "50%",
+      "sparkline": {
+        "show": false
+      }
+    },
+    {
+      "id": 4,
+      "title": "Course API Error Rate",
+      "type": "singlestat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{path=\"/v1/course/getcourse\",status_code=~\"4..|5..\"}[5m])) / sum(rate(http_requests_total{path=\"/v1/course/getcourse\"}[5m])) * 100",
+          "refId": "A"
+        }
+      ],
+      "valueName": "current",
+      "format": "percent",
+      "datasource": "Prometheus",
+      "colorBackground": true,
+      "colorValue": false,
+      "thresholds": "5,10",
+      "colors": ["#299c46", "#e24d42", "#d44a3a"],
+      "valueFontSize": "80%",
+      "prefixFontSize": "50%",
+      "postfixFontSize": "50%",
+      "sparkline": {
+        "show": false
+      }
+    },
+    {
+      "id": 5,
+      "title": "Course API Status Codes",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (status_code) (rate(http_requests_total{path=\"/v1/course/getcourse\"}[5m]))",
+          "legendFormat": "{{status_code}}",
+          "refId": "A"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Requests per second",
+          "show": true
+        },
+        {
+          "show": true
+        }
+      ],
+      "xAxis": {
+        "show": true
+      },
+      "lines": true,
+      "fill": 1,
+      "linewidth": 2,
+      "pointradius": 2,
+      "points": false,
+      "bars": false,
+      "stack": true,
+      "percentage": false,
+      "legend": {
+        "show": true,
+        "values": false,
+        "min": false,
+        "max": false,
+        "current": false,
+        "total": false,
+        "avg": false
+      },
+      "nullPointMode": "null",
+      "steppedLine": false,
+      "tooltip": {
+        "value_type": "individual"
+      },
+      "datasource": "Prometheus"
+    }
+  ],
+  "schemaVersion": 16,
+  "version": 1,
+  "editable": true
+}
