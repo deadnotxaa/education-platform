@@ -10,9 +10,10 @@ import (
 	"github.com/deadnotxaa/education-platform/backend/internal/usecase"
 	"github.com/deadnotxaa/education-platform/backend/pkg/logger"
 
-	"github.com/ansrivas/fiberprometheus/v2"
+	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // NewRouter -.
@@ -29,9 +30,8 @@ func NewRouter(app *fiber.App, cfg *config.Config, t usecase.Platform, l logger.
 
     // Prometheus metrics
     if cfg.Metrics.Enabled {
-        prometheus := fiberprometheus.New("my-service-name")
-        prometheus.RegisterAt(app, "/metrics")
-        app.Use(prometheus.Middleware)
+        app.Use(middleware.PrometheusMiddleware())
+        app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
     }
 
     // Swagger

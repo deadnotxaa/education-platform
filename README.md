@@ -1,6 +1,6 @@
 # Educational platform 
 
-Project that demonstrates full cycle of an educational platform development with a focus on microservice architecture, database design, deployment and management.
+This project demonstrates full cycle of an educational platform development with a focus on microservice architecture, database design, deployment and management.
 
 Previously focused on database design, but now it's much more about backend written in GoLang that emulates the platform's work.
 
