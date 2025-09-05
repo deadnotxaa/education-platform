@@ -1,0 +1,339 @@
+services:
+  etcd1:
+    image: quay.io/coreos/etcd:v3.5.9
+    hostname: etcd1
+    container_name: etcd1
+    environment:
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_INITIAL_CLUSTER: etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      ETCD_INITIAL_CLUSTER_STATE: new
+      ETCD_INITIAL_CLUSTER_TOKEN: pgcluster
+      ETCD_ENABLE_V2: "true"
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd1:2379
+    command: etcd --name etcd1 --initial-advertise-peer-urls http://etcd1:2380
+    volumes:
+      - etcd1-data:/etcd-data
+    networks:
+      - etcd_patroni
+
+  etcd2:
+    image: quay.io/coreos/etcd:v3.5.9
+    hostname: etcd2
+    container_name: etcd2
+    environment:
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_INITIAL_CLUSTER: etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      ETCD_INITIAL_CLUSTER_STATE: new
+      ETCD_INITIAL_CLUSTER_TOKEN: pgcluster
+      ETCD_ENABLE_V2: "true"
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd2:2379
+    command: etcd --name etcd2 --initial-advertise-peer-urls http://etcd2:2380
+    volumes:
+      - etcd2-data:/etcd-data
+    networks:
+      - etcd_patroni
+
+  etcd3:
+    image: quay.io/coreos/etcd:v3.5.9
+    hostname: etcd3
+    container_name: etcd3
+    environment:
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_INITIAL_CLUSTER: etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      ETCD_INITIAL_CLUSTER_STATE: new
+      ETCD_INITIAL_CLUSTER_TOKEN: pgcluster
+      ETCD_ENABLE_V2: "true"
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd3:2379
+    command: etcd --name etcd3 --initial-advertise-peer-urls http://etcd3:2380
+    volumes:
+      - etcd3-data:/etcd-data
+    networks:
+      - etcd_patroni
+
+  haproxy:
+    build:
+      context: .
+      dockerfile: ./db/config/docker/Dockerfile.haproxy
+    container_name: haproxy
+    hostname: haproxy
+    dns:
+      - 127.0.0.11
+    env_file: .env.example
+    environment:
+      ETCDCTL_ENDPOINTS: http://etcd1:2379,http://etcd2:2379,http://etcd3:2379
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      POSTGRES_USER: postgres
+    volumes:
+      - ./db/config/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "5432:5000"
+      - "7070:7000"
+      - "5001:5001"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -h haproxy -p 5000 -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    depends_on:
+      patroni1:
+        condition: service_healthy
+      patroni2:
+        condition: service_healthy
+      patroni3:
+        condition: service_healthy
+    networks:
+      - etcd_patroni
+
+  patroni1:
+    build:
+      context: ./db/patroni
+    image: patroni
+    container_name: patroni1
+    hostname: patroni1
+    env_file: .env.example
+    environment:
+      PATRONI_SCOPE: notxaa
+      PATRONI_NAMESPACE: /service/
+      PATRONI_ETCD_HOSTS: http://etcd1:2379,http://etcd2:2379,http://etcd3:2379
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PATRONI_SUPERUSER_USERNAME: ${POSTGRES_USER}
+      PATRONI_SUPERUSER_PASSWORD: ${POSTGRES_PASSWORD}
+      PATRONI_REPLICATION_USERNAME: replicator
+      PATRONI_REPLICATION_PASSWORD: replicator
+      PATRONI_LOG_LEVEL: WARN
+      PATRONI_NAME: patroni1
+      PATRONI_RESTAPI_LISTEN: 0.0.0.0:8008
+      PATRONI_POSTGRESQL_CONNECT_ADDRESS: patroni1:5432
+      PATRONI_POSTGRESQL_LISTEN: 0.0.0.0:5432
+    volumes:
+      - patroni1-data:/var/lib/postgresql/data
+    shm_size: 1gb
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8008/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    depends_on:
+      - etcd1
+      - etcd2
+      - etcd3
+    networks:
+      - etcd_patroni
+
+  patroni2:
+    build:
+      context: ./db/patroni
+    image: patroni
+    container_name: patroni2
+    hostname: patroni2
+    env_file: .env.example
+    environment:
+      PATRONI_SCOPE: notxaa
+      PATRONI_NAMESPACE: /service/
+      PATRONI_ETCD_HOSTS: http://etcd1:2379,http://etcd2:2379,http://etcd3:2379
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PATRONI_SUPERUSER_USERNAME: ${POSTGRES_USER}
+      PATRONI_SUPERUSER_PASSWORD: ${POSTGRES_PASSWORD}
+      PATRONI_REPLICATION_USERNAME: replicator
+      PATRONI_REPLICATION_PASSWORD: replicator
+      PATRONI_LOG_LEVEL: WARN
+      PATRONI_NAME: patroni2
+      PATRONI_RESTAPI_LISTEN: 0.0.0.0:8008
+      PATRONI_POSTGRESQL_CONNECT_ADDRESS: patroni2:5432
+      PATRONI_POSTGRESQL_LISTEN: 0.0.0.0:5432
+    volumes:
+      - patroni2-data:/var/lib/postgresql/data
+    shm_size: 1gb
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8008/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    depends_on:
+      - etcd1
+      - etcd2
+      - etcd3
+    networks:
+      - etcd_patroni
+
+  patroni3:
+    build:
+      context: ./db/patroni
+    image: patroni
+    container_name: patroni3
+    hostname: patroni3
+    env_file: .env.example
+    environment:
+      PATRONI_SCOPE: notxaa
+      PATRONI_NAMESPACE: /service/
+      PATRONI_ETCD_HOSTS: http://etcd1:2379,http://etcd2:2379,http://etcd3:2379
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PATRONI_SUPERUSER_USERNAME: ${POSTGRES_USER}
+      PATRONI_SUPERUSER_PASSWORD: ${POSTGRES_PASSWORD}
+      PATRONI_REPLICATION_USERNAME: replicator
+      PATRONI_REPLICATION_PASSWORD: replicator
+      PATRONI_LOG_LEVEL: WARN
+      PATRONI_NAME: patroni3
+      PATRONI_RESTAPI_LISTEN: 0.0.0.0:8008
+      PATRONI_POSTGRESQL_CONNECT_ADDRESS: patroni3:5432
+      PATRONI_POSTGRESQL_LISTEN: 0.0.0.0:5432
+    volumes:
+      - patroni3-data:/var/lib/postgresql/data
+    shm_size: 1gb
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8008/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    depends_on:
+      - etcd1
+      - etcd2
+      - etcd3
+    networks:
+      - etcd_patroni
+
+  flyway:
+    image: flyway/flyway:10-alpine
+    container_name: flyway
+    profiles: ["initial"]
+    env_file: .env.example
+    command: >
+      -connectRetries=60
+      -url=jdbc:postgresql://haproxy:5001/${POSTGRES_DB}
+      -user=${POSTGRES_USER}
+      -password=${POSTGRES_PASSWORD}
+      -locations=filesystem:/flyway/sql
+      migrate
+    volumes:
+      - ./db/migrations:/flyway/sql:ro
+    depends_on:
+      haproxy:
+        condition: service_healthy
+    networks:
+      - etcd_patroni
+
+  seeder:
+    image: seeder:latest
+    profiles: ["initial"]
+    env_file: .env.example
+    build:
+      context: .
+      dockerfile: ./db/config/docker/Dockerfile.seeder
+    depends_on:
+      haproxy:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
+    networks:
+      - etcd_patroni
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    env_file: .env.example
+    volumes:
+      - ./db/config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli --user redis --pass redis ping | grep PONG" ]
+      interval: 1s
+      timeout: 3s
+      retries: 50
+    networks:
+      - etcd_patroni
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file: .env.example
+    ports:
+      - "8080:8080"
+    depends_on:
+      haproxy:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - etcd_patroni
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: load-test-client
+    env_file: .env.example
+    profiles: ["benchmark"]
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - etcd_patroni
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    profiles: ["benchmark"]
+    env_file: .env.example
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./db/config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - etcd_patroni
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    profiles: ["benchmark"]
+    env_file: .env.example
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./db/config/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./db/config/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./db/config/grafana/overview-dashboard.json:/etc/grafana/provisioning/dashboards/overview-dashboard.json
+      - ./db/config/grafana/course-dashboard.json:/etc/grafana/provisioning/dashboards/course-dashboard.json
+      - ./db/config/grafana/user-dashboard.json:/etc/grafana/provisioning/dashboards/user-dashboard.json
+      - ./db/config/grafana/report-dashboard.json:/etc/grafana/provisioning/dashboards/report-dashboard.json
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/overview-dashboard.json
+    depends_on:
+      - prometheus
+    networks:
+      - etcd_patroni
+
+networks:
+  etcd_patroni:
+    driver: bridge
+
+volumes:
+  etcd1-data:
+  etcd2-data:
+  etcd3-data:
+  patroni1-data:
+  patroni2-data:
+  patroni3-data:
+  prometheus_data:
+  grafana_data:
+  backup_data:

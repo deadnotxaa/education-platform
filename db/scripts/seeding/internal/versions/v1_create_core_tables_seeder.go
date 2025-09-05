@@ -22,7 +22,7 @@ func SeedV1(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "course_specialization", func() error {
-        return seedCourseSpecialization(db.Conn, seedCfg.SeedCount)
+        return seedCourseSpecialization(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -31,7 +31,7 @@ func SeedV1(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "course", func() error {
-        return seedCourse(db.Conn, seedCfg.SeedCount)
+        return seedCourse(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -40,7 +40,7 @@ func SeedV1(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "course_topic", func() error {
-        return seedCourseTopic(db.Conn, seedCfg.SeedCount)
+        return seedCourseTopic(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -49,7 +49,7 @@ func SeedV1(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "course_topic_association", func() error {
-        return seedCourseTopicAssociation(db.Conn, seedCfg.SeedCount)
+        return seedCourseTopicAssociation(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -58,7 +58,7 @@ func SeedV1(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "project", func() error {
-        return seedProject(db.Conn, seedCfg.SeedCount)
+        return seedProject(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -101,27 +101,24 @@ func seedDifficultyLevel(db *sql.DB) error {
     return nil
 }
 
-func seedCourseSpecialization(db *sql.DB, seedCount int) error {
+func seedCourseSpecialization(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"course_specialization"}) != true {
         return nil
     }
 
-    for i := 0; i < seedCount; i++ {
-        _, err := db.Exec(
-            `INSERT INTO course_specialization (name, description) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+    query := `INSERT INTO course_specialization (name, description)`
+
+    dataFunc := func(i int) []interface{} {
+        return []interface{}{
             gofakeit.JobTitle(),
             gofakeit.Sentence(10),
-        )
-
-        if err != nil {
-            return fmt.Errorf("failed to seed course_specialization: %v", err)
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
-func seedCourse(db *sql.DB, seedCount int) error {
+func seedCourse(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"course", "course_specialization", "difficulty_level"}) != true {
         return fmt.Errorf("failed to seed course, some tables not found")
     }
@@ -138,106 +135,92 @@ func seedCourse(db *sql.DB, seedCount int) error {
         return fmt.Errorf("failed to get course_specialization ids: %v", err)
     }
 
-    for i := 0; i < seedCount; i++ {
+    query := `INSERT INTO course (name, description, specialization_id, duration, price, difficulty_level_id)`
+
+    dataFunc := func(i int) []interface{} {
         // Select random IDs from existing IDs
         specializationID := specializationIDs[gofakeit.Number(0, len(specializationIDs)-1)]
         difficultyLevelID := difficultyLevelIDs[gofakeit.Number(0, len(difficultyLevelIDs)-1)]
 
-        _, err = db.Exec(
-            `INSERT INTO course (name, description, specialization_id, duration, price, difficulty_level_id)
-            VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
+        return []interface{}{
             gofakeit.BookTitle(),
             gofakeit.Sentence(25),
             specializationID,
             gofakeit.Number(100, 500),
             gofakeit.Number(10000, 200000),
             difficultyLevelID,
-        )
-
-        if err != nil {
-            return fmt.Errorf("failed to seed course: %v", err)
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
-func seedCourseTopic(db *sql.DB, seedCount int) error {
+func seedCourseTopic(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"course_topic"}) != true {
         return nil
     }
 
-    for i := 0; i < seedCount; i++ {
-        _, err := db.Exec(
-            `INSERT INTO course_topic (name, description, technologies, labor_intensity_hours, projects_number)
-            VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`,
+    query := `INSERT INTO course_topic (name, description, technologies, labor_intensity_hours, projects_number)`
+
+    dataFunc := func(i int) []interface{} {
+        return []interface{}{
             gofakeit.BookTitle(),
             gofakeit.Sentence(15),
             gofakeit.Sentence(10),
             gofakeit.Number(10, 200),
             gofakeit.Number(1, 10),
-        )
-
-        if err != nil {
-            return fmt.Errorf("failed to seed course_topic: %v", err)
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
-func seedCourseTopicAssociation(db *sql.DB, seedCount int) error {
+func seedCourseTopicAssociation(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"course_topic_association", "course", "course_topic"}) != true {
         return fmt.Errorf("failed to seed course_topic_association, some tables not found")
     }
 
     courseCount, err := getLastTableID(db, "course")
     if err != nil {
-        return fmt.Errorf("failed to get difficulty_level count: %v", err)
+        return fmt.Errorf("failed to get course count: %v", err)
     }
 
     topicCount, err := getLastTableID(db, "course_topic")
     if err != nil {
-        return fmt.Errorf("failed to get course_specialization count: %v", err)
+        return fmt.Errorf("failed to get course_topic count: %v", err)
     }
 
-    for i := 0; i < seedCount; i++ {
-        _, err := db.Exec(
-            `INSERT INTO course_topic_association (course_id, topic_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+    query := `INSERT INTO course_topic_association (course_id, topic_id)`
+
+    dataFunc := func(i int) []interface{} {
+        return []interface{}{
             gofakeit.Number(1, courseCount),
             gofakeit.Number(1, topicCount),
-        )
-
-        if err != nil {
-            return fmt.Errorf("failed to seed course_topic_association: %v", err)
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
-func seedProject(db *sql.DB, seedCount int) error {
+func seedProject(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"project", "course_topic"}) != true {
         return fmt.Errorf("failed to seed project, some tables not found")
     }
 
     topicCount, err := getLastTableID(db, "course_topic")
     if err != nil {
-        return fmt.Errorf("failed to get course_specialization count: %v", err)
+        return fmt.Errorf("failed to get course_topic count: %v", err)
     }
 
-    for i := 0; i < seedCount; i++ {
-        _, err := db.Exec(
-            `INSERT INTO project (topic_id, name, description) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+    query := `INSERT INTO project (topic_id, name, description)`
+
+    dataFunc := func(i int) []interface{} {
+        return []interface{}{
             gofakeit.Number(1, topicCount),
             gofakeit.BookTitle(),
             gofakeit.Sentence(20),
-        )
-
-        if err != nil {
-            return fmt.Errorf("failed to seed project: %v", err)
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }

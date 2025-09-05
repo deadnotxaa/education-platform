@@ -1,3 +1,25 @@
+x-backend-env: &backend-env
+  APP_NAME: "platform-backend"
+  LOG_LEVEL: "debug"
+  SWAGGER_ENABLED: "true"
+  METRICS_ENABLED: "true"
+  HTTP_PORT: "8080"
+  HTTP_USE_PREFORK_MODE: "false"
+  PG_USER: "postgres"
+  PG_PASS: "postgres"
+  PG_HOST: "haproxy"
+  PG_PORT: "5001"
+  PG_NAME: "postgres"
+  PG_POOL_MAX: "10"
+  POSTGRES_USER: "postgres"
+  POSTGRES_PASSWORD: "postgres"
+  REDIS_USER: "redis"
+  REDIS_PASS: "redis"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_DB_NAME: "0"
+  REDIS_POOL_MAX: "10"
+
 services:
   etcd1:
     image: quay.io/coreos/etcd:v3.5.9
@@ -56,7 +78,7 @@ services:
   haproxy:
     build:
       context: .
-      dockerfile: Dockerfile.haproxy
+      dockerfile: config/docker/Dockerfile.haproxy
     container_name: haproxy
     hostname: haproxy
     dns:
@@ -67,7 +89,7 @@ services:
       PGUSER: postgres
       PGPASSWORD: postgres
     volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./config/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     ports:
       - "5432:5000"
       - "7070:7000"
@@ -89,6 +111,8 @@ services:
       - etcd_patroni
 
   patroni1:
+    build:
+      context: ./patroni
     image: patroni
     container_name: patroni1
     hostname: patroni1
@@ -102,13 +126,14 @@ services:
       PATRONI_SUPERUSER_PASSWORD: ${POSTGRES_PASSWORD}
       PATRONI_REPLICATION_USERNAME: replicator
       PATRONI_REPLICATION_PASSWORD: replicator
-      PATRONI_LOG_LEVEL: INFO
+      PATRONI_LOG_LEVEL: WARN
       PATRONI_NAME: patroni1
       PATRONI_RESTAPI_LISTEN: 0.0.0.0:8008
       PATRONI_POSTGRESQL_CONNECT_ADDRESS: patroni1:5432
       PATRONI_POSTGRESQL_LISTEN: 0.0.0.0:5432
     volumes:
       - patroni1-data:/var/lib/postgresql/data
+    shm_size: 1gb
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:8008/health"]
       interval: 10s
@@ -123,6 +148,8 @@ services:
       - etcd_patroni
 
   patroni2:
+    build:
+      context: ./patroni
     image: patroni
     container_name: patroni2
     hostname: patroni2
@@ -136,13 +163,14 @@ services:
       PATRONI_SUPERUSER_PASSWORD: ${POSTGRES_PASSWORD}
       PATRONI_REPLICATION_USERNAME: replicator
       PATRONI_REPLICATION_PASSWORD: replicator
-      PATRONI_LOG_LEVEL: INFO
+      PATRONI_LOG_LEVEL: WARN
       PATRONI_NAME: patroni2
       PATRONI_RESTAPI_LISTEN: 0.0.0.0:8008
       PATRONI_POSTGRESQL_CONNECT_ADDRESS: patroni2:5432
       PATRONI_POSTGRESQL_LISTEN: 0.0.0.0:5432
     volumes:
       - patroni2-data:/var/lib/postgresql/data
+    shm_size: 1gb
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:8008/health"]
       interval: 10s
@@ -157,6 +185,8 @@ services:
       - etcd_patroni
 
   patroni3:
+    build:
+      context: ./patroni
     image: patroni
     container_name: patroni3
     hostname: patroni3
@@ -170,13 +200,14 @@ services:
       PATRONI_SUPERUSER_PASSWORD: ${POSTGRES_PASSWORD}
       PATRONI_REPLICATION_USERNAME: replicator
       PATRONI_REPLICATION_PASSWORD: replicator
-      PATRONI_LOG_LEVEL: INFO
+      PATRONI_LOG_LEVEL: WARN
       PATRONI_NAME: patroni3
       PATRONI_RESTAPI_LISTEN: 0.0.0.0:8008
       PATRONI_POSTGRESQL_CONNECT_ADDRESS: patroni3:5432
       PATRONI_POSTGRESQL_LISTEN: 0.0.0.0:5432
     volumes:
       - patroni3-data:/var/lib/postgresql/data
+    shm_size: 1gb
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://localhost:8008/health"]
       interval: 10s
@@ -193,6 +224,7 @@ services:
   flyway:
     image: flyway/flyway:10-alpine
     container_name: flyway
+    profiles: ["initial"]
     env_file: .env
     command: >
       -connectRetries=60
@@ -211,9 +243,10 @@ services:
 
   seeder:
     image: seeder:latest
+    profiles: ["initial"]
     build:
       context: .
-      dockerfile: Dockerfile.seeder
+      dockerfile: config/docker/Dockerfile.seeder
     environment:
       - APP_ENV=${APP_ENV}
       - SEED_COUNT=${SEED_COUNT}
@@ -230,117 +263,147 @@ services:
     networks:
       - etcd_patroni
 
-  role_setup:
-    image: postgres:latest
+#  role_setup:
+#    image: postgres:latest
+#    environment:
+#      - PGHOST=haproxy
+#      - PGPORT=5001
+#      - PGUSER=${DB_USER}
+#      - PGPASSWORD=${DB_PASSWORD}
+#      - PGDB=${DB_NAME}
+#      - ANALYST_NAMES=${ANALYST_NAMES}
+#    volumes:
+#      - ./scripts/create_analytic_role.sql:/create_analytic_role.sql
+#      - ./scripts/create_analyst_users.sh:/create_analyst_users.sh
+#    command: >
+#      sh -c "psql -h ${PGHOST} -p ${PGPORT} -U ${PGUSER} -d ${PGDB} -f /create_analytic_role.sql &&
+#             chmod +x /create_analyst_users.sh &&
+#             /create_analyst_users.sh"
+#    depends_on:
+#      haproxy:
+#        condition: service_healthy
+#      flyway:
+#        condition: service_completed_successfully
+#    networks:
+#      - etcd_patroni
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
     environment:
-      - PGHOST=haproxy
-      - PGPORT=5001
-      - PGUSER=${DB_USER}
-      - PGPASSWORD=${DB_PASSWORD}
-      - PGDB=${DB_NAME}
-      - ANALYST_NAMES=${ANALYST_NAMES}
+      <<: *backend-env
     volumes:
-      - ./scripts/create_analytic_role.sql:/create_analytic_role.sql
-      - ./scripts/create_analyst_users.sh:/create_analyst_users.sh
-    command: >
-      sh -c "psql -h ${PGHOST} -p ${PGPORT} -U ${PGUSER} -d ${PGDB} -f /create_analytic_role.sql &&
-             chmod +x /create_analyst_users.sh &&
-             /create_analyst_users.sh"
-    depends_on:
-      haproxy:
-        condition: service_healthy
-      flyway:
-        condition: service_completed_successfully
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli --user redis --pass redis ping | grep PONG" ]
+      interval: 1s
+      timeout: 3s
+      retries: 50
     networks:
       - etcd_patroni
 
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ../backend
+      dockerfile: Dockerfile
     environment:
-      - DB_HOST=haproxy
-      - DB_PORT=5000
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      <<: *backend-env
     ports:
-      - "8081:8081"
+      - "8080:8080"
     depends_on:
       haproxy:
         condition: service_healthy
-      flyway:
-        condition: service_completed_successfully
-      seeder:
-        condition: service_completed_successfully
+#      flyway:
+#        condition: service_completed_successfully
+#      seeder:
+#        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     networks:
       - etcd_patroni
 
   client:
     build:
-      context: .
-      dockerfile: Dockerfile.client
+      context: ../client
+      dockerfile: Dockerfile
+    container_name: load-test-client
+    profiles: ["benchmark"]
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     networks:
       - etcd_patroni
 
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
+    profiles: ["benchmark"]
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
     networks:
       - etcd_patroni
 
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    profiles: ["benchmark"]
     ports:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./dashboard.json:/etc/grafana/provisioning/dashboards/seeder_dashboard.json
-      - ./prometheus-datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml
+      - ./config/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./config/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./config/grafana/overview-dashboard.json:/etc/grafana/provisioning/dashboards/overview-dashboard.json
+      - ./config/grafana/course-dashboard.json:/etc/grafana/provisioning/dashboards/course-dashboard.json
+      - ./config/grafana/user-dashboard.json:/etc/grafana/provisioning/dashboards/user-dashboard.json
+      - ./config/grafana/report-dashboard.json:/etc/grafana/provisioning/dashboards/report-dashboard.json
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/seeder_dashboard.json
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/overview-dashboard.json
     depends_on:
       - prometheus
     networks:
       - etcd_patroni
 
-  backup:
-    image: postgres:latest
-    environment:
-      - PGHOST=haproxy
-      - PGPORT=5001
-      - PGUSER=${DB_USER}
-      - PGPASSWORD=${DB_PASSWORD}
-      - PGDB=${DB_NAME}
-      - BACKUP_INTERVAL_CRON=${BACKUP_INTERVAL_CRON:-'0 0 * * *'}
-      - BACKUP_RETENTION_COUNT=${BACKUP_RETENTION_COUNT:-5}
-    volumes:
-      - ./scripts/backup_db.sh:/backup_db.sh
-      - backup_data:/backups
-    command: >
-      sh -c "apt-get update && apt-get install -y cron &&
-             echo \"$BACKUP_INTERVAL_CRON /bin/sh /backup_db.sh\" > /etc/cron.d/backup-cron &&
-             chmod 0644 /etc/cron.d/backup-cron &&
-             crontab /etc/cron.d/backup-cron &&
-             cron -f"
-    depends_on:
-      haproxy:
-        condition: service_healthy
-      flyway:
-        condition: service_completed_successfully
-    networks:
-      - etcd_patroni
+#  backup:
+#    image: postgres:latest
+#    environment:
+#      - PGHOST=haproxy
+#      - PGPORT=5001
+#      - PGUSER=${DB_USER}
+#      - PGPASSWORD=${DB_PASSWORD}
+#      - PGDB=${DB_NAME}
+#      - BACKUP_INTERVAL_CRON=${BACKUP_INTERVAL_CRON:-'0 0 * * *'}
+#      - BACKUP_RETENTION_COUNT=${BACKUP_RETENTION_COUNT:-5}
+#    volumes:
+#      - ./scripts/backup_db.sh:/backup_db.sh
+#      - backup_data:/backups
+#    command: >
+#      sh -c "apt-get update && apt-get install -y cron &&
+#             echo \"$BACKUP_INTERVAL_CRON /bin/sh /backup_db.sh\" > /etc/cron.d/backup-cron &&
+#             chmod 0644 /etc/cron.d/backup-cron &&
+#             crontab /etc/cron.d/backup-cron &&
+#             cron -f"
+#    depends_on:
+#      haproxy:
+#        condition: service_healthy
+#      flyway:
+#        condition: service_completed_successfully
+#    networks:
+#      - etcd_patroni
 
 networks:
   etcd_patroni:

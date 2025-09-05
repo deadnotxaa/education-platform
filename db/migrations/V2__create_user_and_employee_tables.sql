@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS "user" (
+CREATE TABLE IF NOT EXISTS users (
     account_id SERIAL PRIMARY KEY,
     name VARCHAR(255),
     surname VARCHAR(255),
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS role (
 
 CREATE TABLE IF NOT EXISTS employee (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES "user"(account_id),
+    user_id INTEGER REFERENCES users(account_id),
     role_id INTEGER REFERENCES role(id)
 );
 

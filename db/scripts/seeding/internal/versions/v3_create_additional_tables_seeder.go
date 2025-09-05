@@ -13,7 +13,7 @@ func SeedV3(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     version := 3
 
     err := SeedTable(db.Conn, version, "course_calendar", func() error {
-        return seedCourseCalendar(db.Conn, seedCfg.SeedCount)
+        return seedCourseCalendar(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -31,7 +31,7 @@ func SeedV3(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "purchase", func() error {
-        return seedPurchase(db.Conn, seedCfg.SeedCount)
+        return seedPurchase(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -40,7 +40,7 @@ func SeedV3(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "career_center_student", func() error {
-        return seedCareerCenterStudent(db.Conn, seedCfg.SeedCount)
+        return seedCareerCenterStudent(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -49,7 +49,7 @@ func SeedV3(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "partner_company", func() error {
-        return seedPartnerCompany(db.Conn, seedCfg.SeedCount)
+        return seedPartnerCompany(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -58,7 +58,7 @@ func SeedV3(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "job_application", func() error {
-        return seedJobApplication(db.Conn, seedCfg.SeedCount)
+        return seedJobApplication(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -67,7 +67,7 @@ func SeedV3(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "blog_post", func() error {
-        return seedBlogPost(db.Conn, seedCfg.SeedCount)
+        return seedBlogPost(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -76,7 +76,7 @@ func SeedV3(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "tag", func() error {
-        return seedTag(db.Conn, seedCfg.SeedCount)
+        return seedTag(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -85,7 +85,7 @@ func SeedV3(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "post_tag", func() error {
-        return seedPostTag(db.Conn, seedCfg.SeedCount)
+        return seedPostTag(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -94,7 +94,7 @@ func SeedV3(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "course_review", func() error {
-        return seedCourseReview(db.Conn, seedCfg.SeedCount)
+        return seedCourseReview(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -103,7 +103,7 @@ func SeedV3(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     }
 
     err = SeedTable(db.Conn, version, "certificate", func() error {
-        return seedCertificate(db.Conn, seedCfg.SeedCount)
+        return seedCertificate(db.Conn, seedCfg.SeedCount, seedCfg.InsertBatchSize)
     })
     if err != nil {
         return err
@@ -114,7 +114,7 @@ func SeedV3(seedCfg *config.SeedConfig, db *db_utils.DB) error {
     return nil
 }
 
-func seedCourseCalendar(db *sql.DB, seedCount int) error {
+func seedCourseCalendar(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"course_calendar"}) != true {
         return nil
     }
@@ -124,22 +124,22 @@ func seedCourseCalendar(db *sql.DB, seedCount int) error {
         return fmt.Errorf("failed to get course ids: %v", err)
     }
 
-    query := `INSERT INTO course_calendar (course_id, start_date, end_sales_date, remaining_places)
-              VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`
+    query := `INSERT INTO course_calendar (course_id, start_date, end_sales_date, remaining_places)`
 
-    for i := 0; i < seedCount; i++ {
+    dataFunc := func(i int) []interface{} {
         courseID := courseIDs[gofakeit.Number(0, len(courseIDs)-1)]
         startDate := gofakeit.Date()
         endSalesDate := gofakeit.DateRange(startDate, gofakeit.Date())
-        remainingPlaces := gofakeit.Number(0, 100)
 
-        _, err = db.Exec(query, courseID, startDate, endSalesDate, remainingPlaces)
-        if err != nil {
-            return fmt.Errorf("failed to insert course_calendar: %v", err)
+        return []interface{}{
+            courseID,
+            startDate,
+            endSalesDate,
+            gofakeit.Number(0, 100),
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
 func seedCourseType(db *sql.DB) error {
@@ -148,7 +148,7 @@ func seedCourseType(db *sql.DB) error {
     }
 
     query := `INSERT INTO course_type (type_name, discount)
-              VALUES ($1, $2) ON CONFLICT DO NOTHING`
+              VALUES ($1, $2)`
 
     types := []struct {
         name     string
@@ -170,12 +170,12 @@ func seedCourseType(db *sql.DB) error {
     return nil
 }
 
-func seedPurchase(db *sql.DB, seedCount int) error {
+func seedPurchase(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"purchase"}) != true {
         return nil
     }
 
-    userIDs, err := getExistingIDs(db, "user", "account_id")
+    userIDs, err := getExistingIDs(db, "users", "account_id")
     if err != nil {
         return fmt.Errorf("failed to get user ids: %v", err)
     }
@@ -190,57 +190,52 @@ func seedPurchase(db *sql.DB, seedCount int) error {
         return fmt.Errorf("failed to get course type ids: %v", err)
     }
 
-    query := `INSERT INTO purchase (user_id, course_id, purchase_date, course_type_id, total_price, purchase_status)
-              VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`
+    query := `INSERT INTO purchase (user_id, course_id, purchase_date, course_type_id, total_price, purchase_status)`
 
-    for i := 0; i < seedCount; i++ {
+    dataFunc := func(i int) []interface{} {
         userID := userIDs[gofakeit.Number(0, len(userIDs)-1)]
         courseID := courseIDs[gofakeit.Number(0, len(courseIDs)-1)]
         courseTypeID := courseTypeIDs[gofakeit.Number(0, len(courseTypeIDs)-1)]
 
-        purchaseDate := gofakeit.Date()
-        totalPrice := gofakeit.Number(1000, 5000)
-        purchaseStatus := gofakeit.RandomString([]string{"Completed", "Pending", "Cancelled"})
-
-        _, err = db.Exec(query, userID, courseID, purchaseDate, courseTypeID, totalPrice, purchaseStatus)
-        if err != nil {
-            return fmt.Errorf("failed to insert purchase: %v", err)
+        return []interface{}{
+            userID,
+            courseID,
+            gofakeit.Date(),
+            courseTypeID,
+            gofakeit.Number(1000, 5000),
+            gofakeit.RandomString([]string{"Completed", "Pending", "Cancelled"}),
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
-func seedPartnerCompany(db *sql.DB, seedCount int) error {
+func seedPartnerCompany(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"partner_company"}) != true {
         return nil
     }
 
-    query := `INSERT INTO partner_company (short_name, full_name, hired_graduates_count, requirements, agreement_status)
-              VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`
+    query := `INSERT INTO partner_company (short_name, full_name, hired_graduates_count, requirements, agreement_status)`
 
-    for i := 0; i < seedCount; i++ {
-        shortName := gofakeit.Company()
-        fullName := gofakeit.Company() + " LLC"
-        hiredGraduatesCount := gofakeit.Number(0, 100)
-        requirements := gofakeit.Sentence(10)
-        agreementStatus := gofakeit.Bool()
-
-        _, err := db.Exec(query, shortName, fullName, hiredGraduatesCount, requirements, agreementStatus)
-        if err != nil {
-            return fmt.Errorf("failed to insert partner_company: %v", err)
+    dataFunc := func(i int) []interface{} {
+        return []interface{}{
+            gofakeit.Company(),
+            gofakeit.Company() + " LLC",
+            gofakeit.Number(0, 100),
+            gofakeit.Sentence(10),
+            gofakeit.Bool(),
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
-func seedCareerCenterStudent(db *sql.DB, seedCount int) error {
+func seedCareerCenterStudent(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"career_center_student"}) != true {
         return nil
     }
 
-    userIDs, err := getExistingIDs(db, "user", "account_id")
+    userIDs, err := getExistingIDs(db, "users", "account_id")
     if err != nil {
         return fmt.Errorf("failed to get user ids: %v", err)
     }
@@ -250,26 +245,25 @@ func seedCareerCenterStudent(db *sql.DB, seedCount int) error {
         return fmt.Errorf("failed to get course ids: %v", err)
     }
 
-    query := `INSERT INTO career_center_student (user_id, course_id, cv_url, career_support_start, support_period)
-              VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`
+    query := `INSERT INTO career_center_student (user_id, course_id, cv_url, career_support_start, support_period)`
 
-    for i := 0; i < seedCount; i++ {
+    dataFunc := func(i int) []interface{} {
         userID := userIDs[gofakeit.Number(0, len(userIDs)-1)]
         courseID := courseIDs[gofakeit.Number(0, len(courseIDs)-1)]
-        cvURL := gofakeit.URL()
-        careerSupportStart := gofakeit.Date()
-        supportPeriod := gofakeit.Number(1, 12)
 
-        _, err = db.Exec(query, userID, courseID, cvURL, careerSupportStart, supportPeriod)
-        if err != nil {
-            return fmt.Errorf("failed to insert career_center_student: %v", err)
+        return []interface{}{
+            userID,
+            courseID,
+            gofakeit.URL(),
+            gofakeit.Date(),
+            gofakeit.Number(1, 12),
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
-func seedJobApplication(db *sql.DB, seedCount int) error {
+func seedJobApplication(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"job_application"}) != true {
         return nil
     }
@@ -284,25 +278,24 @@ func seedJobApplication(db *sql.DB, seedCount int) error {
         return fmt.Errorf("failed to get company ids: %v", err)
     }
 
-    query := `INSERT INTO job_application (student_id, company_id, application_date, status)
-              VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`
+    query := `INSERT INTO job_application (student_id, company_id, application_date, status)`
 
-    for i := 0; i < seedCount; i++ {
+    dataFunc := func(i int) []interface{} {
         studentID := studentIDs[gofakeit.Number(0, len(studentIDs)-1)]
         companyID := companyIDs[gofakeit.Number(0, len(companyIDs)-1)]
-        applicationDate := gofakeit.Date()
-        status := gofakeit.RandomString([]string{"Applied", "Interviewed", "Rejected", "Hired"})
 
-        _, err = db.Exec(query, studentID, companyID, applicationDate, status)
-        if err != nil {
-            return fmt.Errorf("failed to insert job_application: %v", err)
+        return []interface{}{
+            studentID,
+            companyID,
+            gofakeit.Date(),
+            gofakeit.RandomString([]string{"Applied", "Interviewed", "Rejected", "Hired"}),
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
-func seedBlogPost(db *sql.DB, seedCount int) error {
+func seedBlogPost(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"blog_post", "employee"}) != true {
         return fmt.Errorf("failed to seed blog_post, some tables not found")
     }
@@ -312,46 +305,42 @@ func seedBlogPost(db *sql.DB, seedCount int) error {
         return fmt.Errorf("failed to get employee ids: %v", err)
     }
 
-    query := `INSERT INTO blog_post (author_id, title, publication_date, topic, reading_time_minutes, cover_image_url, content)
-              VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING`
+    query := `INSERT INTO blog_post (author_id, title, publication_date, topic, reading_time_minutes, cover_image_url, content)`
 
-    for i := 0; i < seedCount; i++ {
+    dataFunc := func(i int) []interface{} {
         authorID := employeeIDs[gofakeit.Number(0, len(employeeIDs)-1)]
-        title := gofakeit.BookTitle()
-        publicationDate := gofakeit.Date()
-        topic := gofakeit.Sentence(3)
-        readingTimeMinutes := gofakeit.Number(5, 30)
-        coverImageURL := gofakeit.URL()
-        content := gofakeit.Paragraph(5, 10, 100, "\n")
 
-        _, err = db.Exec(query, authorID, title, publicationDate, topic, readingTimeMinutes, coverImageURL, content)
-        if err != nil {
-            return fmt.Errorf("failed to insert blog_post: %v", err)
+        return []interface{}{
+            authorID,
+            gofakeit.BookTitle(),
+            gofakeit.Date(),
+            gofakeit.Sentence(3),
+            gofakeit.Number(5, 30),
+            gofakeit.URL(),
+            gofakeit.Paragraph(5, 10, 100, "\n"),
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
-func seedTag(db *sql.DB, seedCount int) error {
+func seedTag(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"tag"}) != true {
         return nil
     }
 
-    query := `INSERT INTO tag (name) VALUES ($1) ON CONFLICT DO NOTHING`
+    query := `INSERT INTO tag (name)`
 
-    for i := 0; i < seedCount; i++ {
-        tagName := gofakeit.HackerAdjective() + " " + gofakeit.HackerNoun()
-        _, err := db.Exec(query, tagName)
-        if err != nil {
-            return fmt.Errorf("failed to insert tag: %v", err)
+    dataFunc := func(i int) []interface{} {
+        return []interface{}{
+            gofakeit.HackerAdjective() + " " + gofakeit.HackerNoun(),
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
-func seedPostTag(db *sql.DB, seedCount int) error {
+func seedPostTag(db *sql.DB, seedCount int, insertBatchSize int) error {
     if tablesExists(db, []string{"post_tag", "blog_post", "tag"}) != true {
         return fmt.Errorf("failed to seed post_tag, some tables not found")
     }
@@ -366,27 +355,27 @@ func seedPostTag(db *sql.DB, seedCount int) error {
         return fmt.Errorf("failed to get tag IDs: %v", err)
     }
 
-    query := `INSERT INTO post_tag (post_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`
+    query := `INSERT INTO post_tag (post_id, tag_id)`
 
-    for i := 0; i < seedCount; i++ {
+    dataFunc := func(i int) []interface{} {
         postID := postIDs[gofakeit.Number(0, len(postIDs)-1)]
         tagID := tagIDs[gofakeit.Number(0, len(tagIDs)-1)]
 
-        _, err = db.Exec(query, postID, tagID)
-        if err != nil {
-            return err
+        return []interface{}{
+            postID,
+            tagID,
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
-func seedCourseReview(db *sql.DB, seedCount int) error {
-    if tablesExists(db, []string{"course_review", "course", "user"}) != true {
+func seedCourseReview(db *sql.DB, seedCount int, insertBatchSize int) error {
+    if tablesExists(db, []string{"course_review", "course", "users"}) != true {
         return fmt.Errorf("failed to seed course_review, some tables not found")
     }
 
-    userIDs, err := getExistingIDs(db, "user", "account_id")
+    userIDs, err := getExistingIDs(db, "users", "account_id")
     if err != nil {
         return fmt.Errorf("failed to get user ids: %v", err)
     }
@@ -396,31 +385,30 @@ func seedCourseReview(db *sql.DB, seedCount int) error {
         return fmt.Errorf("failed to get course ids: %v", err)
     }
 
-    query := `INSERT INTO course_review (course_id, user_id, rating, comment, review_date)
-              VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`
+    query := `INSERT INTO course_review (course_id, user_id, rating, comment, review_date)`
 
-    for i := 0; i < seedCount; i++ {
+    dataFunc := func(i int) []interface{} {
         courseID := courseIDs[gofakeit.Number(0, len(courseIDs)-1)]
         userID := userIDs[gofakeit.Number(0, len(userIDs)-1)]
-        rating := gofakeit.Number(1, 5)
-        comment := gofakeit.Sentence(10)
-        reviewDate := gofakeit.Date()
 
-        _, err = db.Exec(query, courseID, userID, rating, comment, reviewDate)
-        if err != nil {
-            return fmt.Errorf("failed to insert course_review: %v", err)
+        return []interface{}{
+            courseID,
+            userID,
+            gofakeit.Number(1, 5),
+            gofakeit.Sentence(10),
+            gofakeit.Date(),
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }
 
-func seedCertificate(db *sql.DB, seedCount int) error {
-    if tablesExists(db, []string{"certificate", "user", "course"}) != true {
+func seedCertificate(db *sql.DB, seedCount int, insertBatchSize int) error {
+    if tablesExists(db, []string{"certificate", "users", "course"}) != true {
         return nil
     }
 
-    userIDs, err := getExistingIDs(db, "user", "account_id")
+    userIDs, err := getExistingIDs(db, "users", "account_id")
     if err != nil {
         return fmt.Errorf("failed to get user ids: %v", err)
     }
@@ -430,19 +418,18 @@ func seedCertificate(db *sql.DB, seedCount int) error {
         return fmt.Errorf("failed to get course ids: %v", err)
     }
 
-    query := `INSERT INTO certificate (user_id, course_id, issue_date)
-              VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`
+    query := `INSERT INTO certificate (user_id, course_id, issue_date)`
 
-    for i := 0; i < seedCount; i++ {
+    dataFunc := func(i int) []interface{} {
         userID := userIDs[gofakeit.Number(0, len(userIDs)-1)]
         courseID := courseIDs[gofakeit.Number(0, len(courseIDs)-1)]
-        issueDate := gofakeit.Date()
 
-        _, err = db.Exec(query, userID, courseID, issueDate)
-        if err != nil {
-            return fmt.Errorf("failed to insert certificate: %v", err)
+        return []interface{}{
+            userID,
+            courseID,
+            gofakeit.Date(),
         }
     }
 
-    return nil
+    return BatchInsertData(db, query, insertBatchSize, dataFunc, seedCount)
 }

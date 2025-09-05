@@ -44,14 +44,14 @@ func (db *DB) connectToDB() error {
         db.cfg.DBConfig.DbName,
     )
 
-    log.Printf("Connecting to DB with connection string: host=%s port=%s dbname=%s user=%s",
+    log.Printf("Connecting to Postgres with connection string: host=%s port=%s dbname=%s user=%s",
         db.cfg.DBConfig.DbHost, db.cfg.DBConfig.DbPort, db.cfg.DBConfig.DbName, db.cfg.DBConfig.DbUser)
 
     for i := 0; i < 60; i++ {
         conn, err := sql.Open("postgres", connStr)
 
         if err != nil {
-            log.Printf("Failed to open DB: %v, retrying...", err)
+            log.Printf("Failed to open Postgres: %v, retrying...", err)
             time.Sleep(1 * time.Second)
             continue
         }
@@ -62,7 +62,7 @@ func (db *DB) connectToDB() error {
             return nil
         }
 
-        log.Printf("DB not ready: %v, retrying...", err)
+        log.Printf("Postgres not ready: %v, retrying...", err)
         err = conn.Close()
         if err != nil {
             return err

@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS course_type (
 
 CREATE TABLE IF NOT EXISTS purchase (
     purchase_id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES "user"(account_id),
+    user_id INTEGER REFERENCES users(account_id),
     course_id INTEGER REFERENCES course(course_id),
     purchase_date TIMESTAMP,
     course_type_id SMALLINT REFERENCES course_type(id),
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS purchase (
 
 CREATE TABLE IF NOT EXISTS career_center_student (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES "user"(account_id),
+    user_id INTEGER REFERENCES users(account_id),
     course_id INTEGER REFERENCES course(course_id),
     cv_url VARCHAR(255),
     career_support_start DATE,
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS post_tag (
 CREATE TABLE IF NOT EXISTS course_review (
     review_id SERIAL PRIMARY KEY,
     course_id INTEGER REFERENCES course(course_id),
-    user_id INTEGER REFERENCES "user"(account_id),
+    user_id INTEGER REFERENCES users(account_id),
     rating SMALLINT,
     comment TEXT,
     review_date TIMESTAMP
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS course_review (
 
 CREATE TABLE IF NOT EXISTS certificate (
     certificate_id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES "user"(account_id),
+    user_id INTEGER REFERENCES users(account_id),
     course_id INTEGER REFERENCES course(course_id),
     issue_date DATE
 );

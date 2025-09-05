@@ -17,7 +17,9 @@ CREATE TABLE IF NOT EXISTS course (
     specialization_id INTEGER REFERENCES course_specialization(id),
     duration INTEGER,
     price INTEGER,
-    difficulty_level_id INTEGER REFERENCES difficulty_level(id)
+    difficulty_level_id INTEGER REFERENCES difficulty_level(id),
+    created_at timestamptz,
+    updated_at timestamptz
 );
 
 CREATE TABLE IF NOT EXISTS course_topic (

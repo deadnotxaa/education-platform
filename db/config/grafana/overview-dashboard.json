@@ -1,0 +1,287 @@
+{
+  "id": null,
+  "title": "Backend API Overview",
+  "tags": ["backend", "overview"],
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total Request Rate (All APIs)",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum by (endpoint) (rate(http_requests_total{endpoint=~\"/v1/(course/getcourse|user/getuser|report/get-top-courses-report)\"}[5m]))",
+          "legendFormat": "{{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Requests per second",
+          "show": true
+        },
+        {
+          "show": true
+        }
+      ],
+      "xAxis": {
+        "show": true
+      },
+      "lines": true,
+      "fill": 1,
+      "linewidth": 2,
+      "pointradius": 2,
+      "points": false,
+      "bars": false,
+      "stack": false,
+      "percentage": false,
+      "legend": {
+        "show": true,
+        "values": false,
+        "min": false,
+        "max": false,
+        "current": false,
+        "total": false,
+        "avg": false
+      },
+      "nullPointMode": "null",
+      "steppedLine": false,
+      "tooltip": {
+        "value_type": "individual"
+      },
+      "datasource": "Prometheus"
+    },
+    {
+      "id": 2,
+      "title": "Course API Total",
+      "type": "singlestat",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(http_requests_total{endpoint=\"/v1/course/getcourse\"})",
+          "refId": "A"
+        }
+      ],
+      "valueName": "current",
+      "format": "short",
+      "datasource": "Prometheus",
+      "colorBackground": false,
+      "colorValue": true,
+      "thresholds": "100,1000",
+      "colors": ["#299c46", "#e24d42", "#d44a3a"],
+      "valueFontSize": "80%",
+      "prefixFontSize": "50%",
+      "postfixFontSize": "50%",
+      "sparkline": {
+        "show": true,
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "fillColor": "rgba(31, 118, 189, 0.18)"
+      }
+    },
+    {
+      "id": 3,
+      "title": "User API Total",
+      "type": "singlestat",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(http_requests_total{endpoint=\"/v1/user/getuser\"})",
+          "refId": "A"
+        }
+      ],
+      "valueName": "current",
+      "format": "short",
+      "datasource": "Prometheus",
+      "colorBackground": false,
+      "colorValue": true,
+      "thresholds": "100,1000",
+      "colors": ["#299c46", "#e24d42", "#d44a3a"],
+      "valueFontSize": "80%",
+      "prefixFontSize": "50%",
+      "postfixFontSize": "50%",
+      "sparkline": {
+        "show": true,
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "fillColor": "rgba(31, 118, 189, 0.18)"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Report API Total",
+      "type": "singlestat",
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(http_requests_total{endpoint=\"/v1/report/get-top-courses-report\"})",
+          "refId": "A"
+        }
+      ],
+      "valueName": "current",
+      "format": "short",
+      "datasource": "Prometheus",
+      "colorBackground": false,
+      "colorValue": true,
+      "thresholds": "10,100",
+      "colors": ["#299c46", "#e24d42", "#d44a3a"],
+      "valueFontSize": "80%",
+      "prefixFontSize": "50%",
+      "postfixFontSize": "50%",
+      "sparkline": {
+        "show": true,
+        "full": false,
+        "lineColor": "rgb(31, 120, 193)",
+        "fillColor": "rgba(31, 118, 189, 0.18)"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Response Times Comparison (95th percentile)",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{endpoint=\"/v1/course/getcourse\"}[5m]))",
+          "legendFormat": "Course API",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{endpoint=\"/v1/user/getuser\"}[5m]))",
+          "legendFormat": "User API",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{endpoint=\"/v1/report/get-top-courses-report\"}[5m]))",
+          "legendFormat": "Report API",
+          "refId": "C"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Response time (seconds)",
+          "show": true
+        },
+        {
+          "show": true
+        }
+      ],
+      "xAxis": {
+        "show": true
+      },
+      "lines": true,
+      "fill": 1,
+      "linewidth": 2,
+      "pointradius": 2,
+      "points": false,
+      "bars": false,
+      "stack": false,
+      "percentage": false,
+      "legend": {
+        "show": true,
+        "values": false,
+        "min": false,
+        "max": false,
+        "current": false,
+        "total": false,
+        "avg": false
+      },
+      "nullPointMode": "null",
+      "steppedLine": false,
+      "tooltip": {
+        "value_type": "individual"
+      },
+      "datasource": "Prometheus"
+    },
+    {
+      "id": 6,
+      "title": "Overall Error Rate",
+      "type": "graph",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "targets": [
+        {
+          "expr": "sum by (endpoint) (rate(http_requests_total{endpoint=~\"/v1/(course/getcourse|user/getuser|report/get-top-courses-report)\",status_code=~\"4..|5..\"}[5m])) / sum by (endpoint) (rate(http_requests_total{endpoint=~\"/v1/(course/getcourse|user/getuser|report/get-top-courses-report)\"}[5m])) * 100",
+          "legendFormat": "{{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "yAxes": [
+        {
+          "label": "Error rate (%)",
+          "show": true,
+          "max": 100,
+          "min": 0
+        },
+        {
+          "show": true
+        }
+      ],
+      "xAxis": {
+        "show": true
+      },
+      "lines": true,
+      "fill": 1,
+      "linewidth": 2,
+      "pointradius": 2,
+      "points": false,
+      "bars": false,
+      "stack": false,
+      "percentage": false,
+      "legend": {
+        "show": true,
+        "values": false,
+        "min": false,
+        "max": false,
+        "current": false,
+        "total": false,
+        "avg": false
+      },
+      "nullPointMode": "null",
+      "steppedLine": false,
+      "tooltip": {
+        "value_type": "individual"
+      },
+      "datasource": "Prometheus"
+    }
+  ],
+  "schemaVersion": 16,
+  "version": 1,
+  "editable": true
+}
+

@@ -3,7 +3,7 @@ CREATE INDEX idx_course_course_id ON course(course_id);
 CREATE INDEX idx_purchase_course_id ON purchase(course_id);
 CREATE INDEX idx_purchase_user_id ON purchase(user_id);
 CREATE INDEX idx_purchase_date ON purchase(purchase_date);
-CREATE INDEX idx_user_account_id ON "user"(account_id);
+CREATE INDEX idx_user_account_id ON users(account_id);
 CREATE INDEX idx_employee_user_id ON employee(user_id);
 
 -- Indexes for query2
