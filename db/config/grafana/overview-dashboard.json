@@ -21,8 +21,8 @@
       },
       "targets": [
         {
-          "expr": "sum by (path) (rate(http_requests_total{path=~\"/v1/(course/getcourse|user/getuser|report/get-top-courses-report)\"}[5m]))",
-          "legendFormat": "{{path}}",
+          "expr": "sum by (endpoint) (rate(http_requests_total{endpoint=~\"/v1/(course/getcourse|user/getuser|report/get-top-courses-report)\"}[5m]))",
+          "legendFormat": "{{endpoint}}",
           "refId": "A"
         }
       ],
@@ -74,7 +74,7 @@
       },
       "targets": [
         {
-          "expr": "sum(http_requests_total{path=\"/v1/course/getcourse\"})",
+          "expr": "sum(http_requests_total{endpoint=\"/v1/course/getcourse\"})",
           "refId": "A"
         }
       ],
@@ -107,7 +107,7 @@
       },
       "targets": [
         {
-          "expr": "sum(http_requests_total{path=\"/v1/user/getuser\"})",
+          "expr": "sum(http_requests_total{endpoint=\"/v1/user/getuser\"})",
           "refId": "A"
         }
       ],
@@ -140,7 +140,7 @@
       },
       "targets": [
         {
-          "expr": "sum(http_requests_total{path=\"/v1/report/get-top-courses-report\"})",
+          "expr": "sum(http_requests_total{endpoint=\"/v1/report/get-top-courses-report\"})",
           "refId": "A"
         }
       ],
@@ -173,17 +173,17 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{path=\"/v1/course/getcourse\"}[5m]))",
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{endpoint=\"/v1/course/getcourse\"}[5m]))",
           "legendFormat": "Course API",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{path=\"/v1/user/getuser\"}[5m]))",
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{endpoint=\"/v1/user/getuser\"}[5m]))",
           "legendFormat": "User API",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{path=\"/v1/report/get-top-courses-report\"}[5m]))",
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{endpoint=\"/v1/report/get-top-courses-report\"}[5m]))",
           "legendFormat": "Report API",
           "refId": "C"
         }
@@ -236,8 +236,8 @@
       },
       "targets": [
         {
-          "expr": "sum by (path) (rate(http_requests_total{path=~\"/v1/(course/getcourse|user/getuser|report/get-top-courses-report)\",status_code=~\"4..|5..\"}[5m])) / sum by (path) (rate(http_requests_total{path=~\"/v1/(course/getcourse|user/getuser|report/get-top-courses-report)\"}[5m])) * 100",
-          "legendFormat": "{{path}}",
+          "expr": "sum by (endpoint) (rate(http_requests_total{endpoint=~\"/v1/(course/getcourse|user/getuser|report/get-top-courses-report)\",status_code=~\"4..|5..\"}[5m])) / sum by (endpoint) (rate(http_requests_total{endpoint=~\"/v1/(course/getcourse|user/getuser|report/get-top-courses-report)\"}[5m])) * 100",
+          "legendFormat": "{{endpoint}}",
           "refId": "A"
         }
       ],

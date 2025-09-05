@@ -21,7 +21,7 @@
       },
       "targets": [
         {
-          "expr": "rate(http_requests_total{path=\"/v1/report/get-top-courses-report\"}[5m])",
+          "expr": "rate(http_requests_total{endpoint=\"/v1/report/get-top-courses-report\"}[5m])",
           "legendFormat": "{{method}} {{status_code}}",
           "refId": "A"
         }
@@ -74,17 +74,17 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{path=\"/v1/report/get-top-courses-report\"}[5m]))",
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{endpoint=\"/v1/report/get-top-courses-report\"}[5m]))",
           "legendFormat": "95th percentile",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{path=\"/v1/report/get-top-courses-report\"}[5m]))",
+          "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{endpoint=\"/v1/report/get-top-courses-report\"}[5m]))",
           "legendFormat": "50th percentile",
           "refId": "B"
         },
         {
-          "expr": "rate(http_request_duration_seconds_sum{path=\"/v1/report/get-top-courses-report\"}[5m]) / rate(http_request_duration_seconds_count{path=\"/v1/report/get-top-courses-report\"}[5m])",
+          "expr": "rate(http_request_duration_seconds_sum{endpoint=\"/v1/report/get-top-courses-report\"}[5m]) / rate(http_request_duration_seconds_count{endpoint=\"/v1/report/get-top-courses-report\"}[5m])",
           "legendFormat": "Average",
           "refId": "C"
         }
@@ -137,7 +137,7 @@
       },
       "targets": [
         {
-          "expr": "sum(http_requests_total{path=\"/v1/report/get-top-courses-report\"})",
+          "expr": "sum(http_requests_total{endpoint=\"/v1/report/get-top-courses-report\"})",
           "refId": "A"
         }
       ],
@@ -166,7 +166,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{path=\"/v1/report/get-top-courses-report\",status_code=~\"4..|5..\"}[5m])) / sum(rate(http_requests_total{path=\"/v1/report/get-top-courses-report\"}[5m])) * 100",
+          "expr": "sum(rate(http_requests_total{endpoint=\"/v1/report/get-top-courses-report\",status_code=~\"4..|5..\"}[5m])) / sum(rate(http_requests_total{endpoint=\"/v1/report/get-top-courses-report\"}[5m])) * 100",
           "refId": "A"
         }
       ],
@@ -196,7 +196,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (status_code) (rate(http_requests_total{path=\"/v1/report/get-top-courses-report\"}[5m]))",
+          "expr": "sum by (status_code) (rate(http_requests_total{endpoint=\"/v1/report/get-top-courses-report\"}[5m]))",
           "legendFormat": "{{status_code}}",
           "refId": "A"
         }

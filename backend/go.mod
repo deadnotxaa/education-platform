@@ -4,7 +4,6 @@ go 1.24.4
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/ansrivas/fiberprometheus/v2 v2.12.0
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/goccy/go-json v0.10.5
@@ -13,6 +12,7 @@ require (
 	github.com/gofiber/swagger v1.1.1
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/prometheus/client_golang v1.22.0
+	github.com/redis/go-redis/v9 v9.11.0
 	github.com/rs/zerolog v1.34.0
 )
 
@@ -48,14 +48,11 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/redis/go-redis/v9 v9.11.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/swaggo/files/v2 v2.0.2 // indirect
 	github.com/swaggo/swag v1.16.4 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.63.0 // indirect
-	go.opentelemetry.io/otel v1.37.0 // indirect
-	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
