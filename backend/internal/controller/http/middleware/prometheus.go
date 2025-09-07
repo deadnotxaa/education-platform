@@ -61,14 +61,14 @@ func PrometheusMiddleware() fiber.Handler {
 
 // normalizeEndpoint normalizes endpoint paths to avoid high cardinality
 func normalizeEndpoint(path string) string {
-	switch {
-	case path == "/v1/course/getcourse":
+	switch path {
+	case "/v1/course/getcourse":
 		return "/v1/course/getcourse"
-	case path == "/v1/user/getuser":
+	case "/v1/user/getuser":
 		return "/v1/user/getuser"
-	case path == "/v1/report/get-top-courses-report":
+	case "/v1/report/get-top-courses-report":
 		return "/v1/report/get-top-courses-report"
-	case path == "/metrics":
+	case "/metrics":
 		return "/metrics"
 	default:
 		return "other"
