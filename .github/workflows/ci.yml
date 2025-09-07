@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main 
+  pull_request:
+    branches:
+      - main
+      
+jobs:
+  golangci-lint:
+    name: runner / golangci-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v5
+        
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.24'
+          cache: false
+          
+      - name: Download deps
+        run: go mod download
+        working-directory: backend
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          working-directory: backend
+          args: --timeout=15m ./...
