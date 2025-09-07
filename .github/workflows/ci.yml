@@ -20,7 +20,8 @@ jobs:
           go-version: '1.24'
           cache: false
       - name: Install deps
-        run: go mod download    
+        run: go mod download
+        working-directory: backend   
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
